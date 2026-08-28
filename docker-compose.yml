@@ -1,0 +1,50 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tattos-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_NAME=tattos_db
+      - DB_USERNAME=root
+      - DB_PASSWORD=root
+      - JWT_SECRET=minha-chave-secreta-super-segura-para-jwt-tattos
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - tattos-network
+
+  db:
+    image: mysql:8.4
+    container_name: tattos-mysql
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: tattos_db
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - tattos-network
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  tattos-network:
+    driver: bridge
