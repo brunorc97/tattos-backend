@@ -1,0 +1,96 @@
+package com.tattos.model;
+
+import com.tattos.model.enums.StatusTransacao;
+import com.tattos.model.enums.TipoTransacao;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.*;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "transacoes_financeiras")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class TransacaoFinanceira {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @NotBlank(message = "A descrição da transação é obrigatória")
+    @Column(nullable = false, length = 255)
+    private String descricao;
+
+    @NotNull(message = "O valor da transação é obrigatório")
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal valor;
+
+    @NotNull(message = "O tipo da transação é obrigatório")
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private TipoTransacao tipo;
+
+    @NotNull(message = "A data da transação é obrigatória")
+    @Column(nullable = false)
+    private LocalDate data;
+
+    @Builder.Default
+    @NotNull(message = "O status da transação é obrigatório")
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    private StatusTransacao status = StatusTransacao.CONCLUIDO;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tatuador_id")
+    private Usuario tatuador;
+
+    @Column(length = 80)
+    private String categoria;
+
+    @Column(name = "forma_pagamento", length = 50)
+    private String formaPagamento;
+
+    @Builder.Default
+    @Column(name = "comissao_percentual", precision = 5, scale = 2)
+    private BigDecimal comissaoPercentual = BigDecimal.ZERO;
+
+    @Builder.Default
+    @Column(name = "valor_repasse", precision = 10, scale = 2)
+    private BigDecimal valorRepasse = BigDecimal.ZERO;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "agendamento_id")
+    private Agendamento agendamento;
+
+    @Builder.Default
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
+
+    @Builder.Default
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt = LocalDateTime.now();
+
+    @PrePersist
+    @PreUpdate
+    public void calcularRepasse() {
+        if (TipoTransacao.RECEITA.equals(this.tipo) && this.tatuador != null && this.valor != null) {
+            BigDecimal taxa = (this.comissaoPercentual != null && this.comissaoPercentual.compareTo(BigDecimal.ZERO) > 0)
+                    ? this.comissaoPercentual
+                    : (this.tatuador.getComissaoPercentual() != null ? this.tatuador.getComissaoPercentual() : new BigDecimal("70.00"));
+            this.comissaoPercentual = taxa;
+            this.valorRepasse = this.valor.multiply(taxa).divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
+        } else if (TipoTransacao.DESPESA.equals(this.tipo)) {
+            this.comissaoPercentual = BigDecimal.ZERO;
+            this.valorRepasse = BigDecimal.ZERO;
+        }
+        this.updatedAt = LocalDateTime.now();
+    }
+}

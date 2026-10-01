@@ -1,11 +1,22 @@
 package com.tattos.dto.response;
 
-public record LoginResponseDTO(
-    String token,
-    String type,
-    UserResponseDTO user
-) {
-    public static LoginResponseDTO of(String token, UserResponseDTO user) {
-        return new LoginResponseDTO(token, "Bearer", user);
-    }
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class LoginResponseDTO {
+
+    private String token;
+
+    @Builder.Default
+    private String tipo = "Bearer";
+
+    private Long tempoExpiracaoMs;
+
+    private UsuarioResponseDTO usuario;
 }

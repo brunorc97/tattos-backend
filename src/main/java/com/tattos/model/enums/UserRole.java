@@ -1,7 +1,7 @@
 package com.tattos.model.enums;
 
 public enum UserRole {
-    ROLE_ADMIN,
+    ROLE_GESTOR,
     ROLE_TATUADOR,
-    ROLE_RECEPCAO
+    ROLE_CLIENTE
 }

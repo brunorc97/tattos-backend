@@ -1,21 +1,48 @@
 package com.tattos.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDateTime;
 import java.util.Map;
 
-public record ErrorResponseDTO(
-    LocalDateTime timestamp,
-    int status,
-    String error,
-    String message,
-    String path,
-    Map<String, String> errors
-) {
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class ErrorResponseDTO {
+
+    @Builder.Default
+    private LocalDateTime timestamp = LocalDateTime.now();
+
+    private int status;
+    private String error;
+    private String message;
+    private String path;
+    private Map<String, String> fieldErrors;
+
     public static ErrorResponseDTO of(int status, String error, String message, String path) {
-        return new ErrorResponseDTO(LocalDateTime.now(), status, error, message, path, null);
+        return ErrorResponseDTO.builder()
+                .timestamp(LocalDateTime.now())
+                .status(status)
+                .error(error)
+                .message(message)
+                .path(path)
+                .build();
     }
 
-    public static ErrorResponseDTO of(int status, String error, String message, String path, Map<String, String> errors) {
-        return new ErrorResponseDTO(LocalDateTime.now(), status, error, message, path, errors);
+    public static ErrorResponseDTO of(int status, String error, String message, String path, Map<String, String> fieldErrors) {
+        return ErrorResponseDTO.builder()
+                .timestamp(LocalDateTime.now())
+                .status(status)
+                .error(error)
+                .message(message)
+                .path(path)
+                .fieldErrors(fieldErrors)
+                .build();
     }
 }

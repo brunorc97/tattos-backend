@@ -3,7 +3,7 @@ package com.tattos.controller;
 import com.tattos.dto.request.LoginRequestDTO;
 import com.tattos.dto.request.RegisterRequestDTO;
 import com.tattos.dto.response.LoginResponseDTO;
-import com.tattos.dto.response.UserResponseDTO;
+import com.tattos.dto.response.UsuarioResponseDTO;
 import com.tattos.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,12 +25,12 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<UserResponseDTO> register(@Valid @RequestBody RegisterRequestDTO request) {
+    public ResponseEntity<UsuarioResponseDTO> register(@Valid @RequestBody RegisterRequestDTO request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(authService.register(request));
     }
 
     @GetMapping("/me")
-    public ResponseEntity<UserResponseDTO> getCurrentUser(Authentication authentication) {
+    public ResponseEntity<UsuarioResponseDTO> me(Authentication authentication) {
         return ResponseEntity.ok(authService.getCurrentUser(authentication.getName()));
     }
 }

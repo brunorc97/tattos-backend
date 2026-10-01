@@ -3,25 +3,74 @@ package com.tattos.dto.request;
 import com.tattos.model.enums.UserRole;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-public record RegisterRequestDTO(
-    @NotBlank(message = "O nome de usuário é obrigatório")
-    @Size(min = 3, max = 80, message = "O nome de usuário deve ter entre 3 e 80 caracteres")
-    String username,
+import java.math.BigDecimal;
 
-    @NotBlank(message = "A senha é obrigatória")
-    @Size(min = 6, message = "A senha deve ter pelo menos 6 caracteres")
-    String password,
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class RegisterRequestDTO {
 
-    @NotBlank(message = "O nome completo é obrigatório")
-    String name,
+    private String nome;
+    private String name;
 
-    @NotBlank(message = "O e-mail é obrigatório")
-    @Email(message = "Formato de e-mail inválido")
-    String email,
+    @NotBlank(message = "O email é obrigatório")
+    @Email(message = "Email com formato inválido")
+    private String email;
 
-    @NotNull(message = "O perfil de acesso (Role) é obrigatório")
-    UserRole role
-) {}
+    private String senha;
+    private String password;
+
+    private UserRole role;
+
+    private String telefone;
+    private String phone;
+
+    private String endereco;
+    private String address;
+
+    private String especialidade;
+    private String specialty;
+
+    private String bio;
+
+    private String cargo;
+
+    private BigDecimal comissaoPercentual;
+
+    public String getResolvedNome() {
+        if (nome != null && !nome.trim().isEmpty()) return nome.trim();
+        if (name != null && !name.trim().isEmpty()) return name.trim();
+        return "";
+    }
+
+    public String getResolvedSenha() {
+        if (senha != null && !senha.isEmpty()) return senha;
+        if (password != null && !password.isEmpty()) return password;
+        return "";
+    }
+
+    public String getResolvedTelefone() {
+        if (telefone != null && !telefone.trim().isEmpty()) return telefone.trim();
+        if (phone != null && !phone.trim().isEmpty()) return phone.trim();
+        return null;
+    }
+
+    public String getResolvedEndereco() {
+        if (endereco != null && !endereco.trim().isEmpty()) return endereco.trim();
+        if (address != null && !address.trim().isEmpty()) return address.trim();
+        return null;
+    }
+
+    public String getResolvedEspecialidade() {
+        if (especialidade != null && !especialidade.trim().isEmpty()) return especialidade.trim();
+        if (specialty != null && !specialty.trim().isEmpty()) return specialty.trim();
+        return null;
+    }
+}

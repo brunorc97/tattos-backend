@@ -1,0 +1,110 @@
+package com.tattos.service;
+
+import com.tattos.dto.request.FichaAnamneseRequestDTO;
+import com.tattos.dto.response.FichaAnamneseResponseDTO;
+import com.tattos.exception.BusinessException;
+import com.tattos.exception.ResourceNotFoundException;
+import com.tattos.model.Agendamento;
+import com.tattos.model.FichaAnamnese;
+import com.tattos.model.Usuario;
+import com.tattos.repository.AgendamentoRepository;
+import com.tattos.repository.FichaAnamneseRepository;
+import com.tattos.repository.UsuarioRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class FichaAnamneseService {
+
+    private final FichaAnamneseRepository fichaRepository;
+    private final UsuarioRepository usuarioRepository;
+    private final AgendamentoRepository agendamentoRepository;
+
+    @Transactional
+    public FichaAnamneseResponseDTO registrarFicha(FichaAnamneseRequestDTO dto) {
+        Usuario cliente = usuarioRepository.findById(dto.getClienteId())
+                .orElseThrow(() -> new ResourceNotFoundException("Cliente não encontrado com ID: " + dto.getClienteId()));
+
+        Agendamento agendamento = null;
+        if (dto.getAgendamentoId() != null) {
+            agendamento = agendamentoRepository.findById(dto.getAgendamentoId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Agendamento não encontrado com ID: " + dto.getAgendamentoId()));
+        }
+
+        if (Boolean.TRUE.equals(dto.getTermoAssinado()) && (dto.getAssinaturaDigital() == null || dto.getAssinaturaDigital().trim().isEmpty())) {
+            throw new BusinessException("Para confirmar a assinatura do termo, os dados biométricos/assinatura digital são obrigatórios.");
+        }
+
+        FichaAnamnese ficha = FichaAnamnese.builder()
+                .cliente(cliente)
+                .agendamento(agendamento)
+                .historicoSaude(dto.getHistoricoSaude())
+                .alergias(dto.getAlergias())
+                .termoAssinado(Boolean.TRUE.equals(dto.getTermoAssinado()))
+                .assinaturaDigital(dto.getAssinaturaDigital())
+                .diabetes(Boolean.TRUE.equals(dto.getDiabetes()))
+                .hemofilia(Boolean.TRUE.equals(dto.getHemofilia()))
+                .hipertensao(Boolean.TRUE.equals(dto.getHipertensao()))
+                .gestanteLactante(Boolean.TRUE.equals(dto.getGestanteLactante()))
+                .medicamentosUso(dto.getMedicamentosUso())
+                .observacoes(dto.getObservacoes())
+                .dataCriacao(LocalDateTime.now())
+                .build();
+
+        // Avaliação clínica automática de biossegurança
+        ficha.avaliarAlertasClinicos();
+
+        FichaAnamnese salva = fichaRepository.save(ficha);
+        return FichaAnamneseResponseDTO.fromEntity(salva);
+    }
+
+    @Transactional(readOnly = true)
+    public FichaAnamneseResponseDTO buscarPorId(Long id) {
+        FichaAnamnese ficha = fichaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Ficha de anamnese não encontrada com ID: " + id));
+        return FichaAnamneseResponseDTO.fromEntity(ficha);
+    }
+
+    @Transactional(readOnly = true)
+    public List<FichaAnamneseResponseDTO> buscarPorCliente(Long clienteId) {
+        return fichaRepository.findByClienteId(clienteId).stream()
+                .map(FichaAnamneseResponseDTO::fromEntity)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public FichaAnamneseResponseDTO buscarPorAgendamento(Long agendamentoId) {
+        FichaAnamnese ficha = fichaRepository.findByAgendamentoId(agendamentoId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ficha de anamnese não encontrada para o agendamento ID: " + agendamentoId));
+        return FichaAnamneseResponseDTO.fromEntity(ficha);
+    }
+
+    @Transactional(readOnly = true)
+    public List<FichaAnamneseResponseDTO> listarAlertasClinicos() {
+        return fichaRepository.findByAlertaClinicoTrue().stream()
+                .map(FichaAnamneseResponseDTO::fromEntity)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<FichaAnamneseResponseDTO> listarTodas() {
+        return fichaRepository.findAll().stream()
+                .map(FichaAnamneseResponseDTO::fromEntity)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public boolean validarAptidaoCliente(Long clienteId) {
+        List<FichaAnamnese> fichas = fichaRepository.findByClienteId(clienteId);
+        if (fichas.isEmpty()) {
+            return false;
+        }
+        // Retorna false se tiver alerta clínico ativo
+        return fichas.stream().noneMatch(f -> Boolean.TRUE.equals(f.getAlertaClinico()));
+    }
+}

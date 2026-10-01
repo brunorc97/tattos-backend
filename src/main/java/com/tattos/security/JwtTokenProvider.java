@@ -1,5 +1,6 @@
 package com.tattos.security;
 
+import com.tattos.model.Usuario;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -24,10 +25,13 @@ public class JwtTokenProvider {
     public JwtTokenProvider(
             @Value("${jwt.secret:minha-chave-secreta-super-segura-para-jwt-tattos-2026-com-no-minimo-32-caracteres}") String secret,
             @Value("${jwt.expiration:86400000}") long expirationTime) {
-        // Garante no mínimo 256 bits para o algoritmo HS256
         byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
         this.key = Keys.hmacShaKeyFor(keyBytes);
         this.expirationTime = expirationTime;
+    }
+
+    public long getExpirationTime() {
+        return this.expirationTime;
     }
 
     public String generateToken(Authentication authentication) {
@@ -39,17 +43,22 @@ public class JwtTokenProvider {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expirationTime);
 
-        return Jwts.builder()
+        var builder = Jwts.builder()
                 .subject(username)
                 .claim("roles", roles)
                 .issuedAt(now)
-                .expiration(expiryDate)
-                .signWith(key)
-                .compact();
+                .expiration(expiryDate);
+
+        if (authentication.getPrincipal() instanceof Usuario usuario) {
+            builder.claim("userId", usuario.getId())
+                   .claim("name", usuario.getNome());
+        }
+
+        return builder.signWith(key).compact();
     }
 
-    public String generateTokenForUser(UserDetails userDetails) {
-        String roles = userDetails.getAuthorities().stream()
+    public String generateTokenForUser(Usuario usuario) {
+        String roles = usuario.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
 
@@ -57,7 +66,9 @@ public class JwtTokenProvider {
         Date expiryDate = new Date(now.getTime() + expirationTime);
 
         return Jwts.builder()
-                .subject(userDetails.getUsername())
+                .subject(usuario.getEmail())
+                .claim("userId", usuario.getId())
+                .claim("name", usuario.getNome())
                 .claim("roles", roles)
                 .issuedAt(now)
                 .expiration(expiryDate)

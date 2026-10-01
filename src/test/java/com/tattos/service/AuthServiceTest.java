@@ -1,0 +1,110 @@
+package com.tattos.service;
+
+import com.tattos.dto.request.LoginRequestDTO;
+import com.tattos.dto.request.RegisterRequestDTO;
+import com.tattos.dto.response.LoginResponseDTO;
+import com.tattos.dto.response.UsuarioResponseDTO;
+import com.tattos.exception.ConflictException;
+import com.tattos.model.enums.UserRole;
+import com.tattos.repository.UsuarioRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+@SpringBootTest
+@ActiveProfiles("test")
+@Transactional
+class AuthServiceTest {
+
+    @Autowired
+    private AuthService authService;
+
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+
+    @BeforeEach
+    void setUp() {
+        usuarioRepository.deleteAll();
+    }
+
+    @Test
+    @DisplayName("Deve registrar um tatuador com perfil e dados específicos com sucesso")
+    void deveRegistrarTatuadorComSucesso() {
+        RegisterRequestDTO request = RegisterRequestDTO.builder()
+                .nome("Rodrigo Sanches")
+                .email("rodrigo@tattos.com")
+                .senha("segredo123")
+                .role(UserRole.ROLE_TATUADOR)
+                .telefone("(11) 98765-4321")
+                .especialidade("Lettering & Realismo")
+                .bio("Especialista em caligrafia")
+                .comissaoPercentual(new BigDecimal("70.00"))
+                .build();
+
+        UsuarioResponseDTO response = authService.register(request);
+
+        assertNotNull(response.getId());
+        assertEquals("Rodrigo Sanches", response.getNome());
+        assertEquals("rodrigo@tattos.com", response.getEmail());
+        assertEquals(UserRole.ROLE_TATUADOR, response.getRole());
+        assertEquals("Lettering & Realismo", response.getEspecialidade());
+        assertEquals(new BigDecimal("70.00"), response.getComissaoPercentual());
+    }
+
+    @Test
+    @DisplayName("Deve rejeitar cadastro com e-mail já existente")
+    void deveLancarExcecaoQuandoEmailDuplicado() {
+        RegisterRequestDTO request = RegisterRequestDTO.builder()
+                .nome("Usuario Um")
+                .email("duplicado@tattos.com")
+                .senha("pass123")
+                .role(UserRole.ROLE_CLIENTE)
+                .build();
+
+        authService.register(request);
+
+        RegisterRequestDTO request2 = RegisterRequestDTO.builder()
+                .nome("Usuario Dois")
+                .email("duplicado@tattos.com")
+                .senha("outrapass")
+                .role(UserRole.ROLE_CLIENTE)
+                .build();
+
+        assertThrows(ConflictException.class, () -> authService.register(request2));
+    }
+
+    @Test
+    @DisplayName("Deve realizar login com credenciais válidas e retornar token JWT")
+    void deveFazerLoginComSucesso() {
+        RegisterRequestDTO reg = RegisterRequestDTO.builder()
+                .nome("Admin Teste")
+                .email("admin.teste@tattos.com")
+                .senha("adminPass123")
+                .role(UserRole.ROLE_GESTOR)
+                .cargo("Diretor Geral")
+                .build();
+
+        authService.register(reg);
+
+        LoginRequestDTO login = LoginRequestDTO.builder()
+                .email("admin.teste@tattos.com")
+                .senha("adminPass123")
+                .build();
+
+        LoginResponseDTO response = authService.login(login);
+
+        assertNotNull(response.getToken());
+        assertEquals("Bearer", response.getTipo());
+        assertNotNull(response.getUsuario());
+        assertEquals("admin.teste@tattos.com", response.getUsuario().getEmail());
+        assertEquals(UserRole.ROLE_GESTOR, response.getUsuario().getRole());
+    }
+}
