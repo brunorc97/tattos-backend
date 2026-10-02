@@ -22,12 +22,15 @@ RUN ./gradlew bootJar --no-daemon -x test
 FROM eclipse-temurin:25-jre
 WORKDIR /app
 
-# Cria usuário não-root por segurança
-RUN groupadd -r tattos && useradd -r -g tattos tattos
+# Cria usuário não-root, diretório de logs e define a propriedade antes de alternar o usuário
+RUN groupadd -r tattos && useradd -r -g tattos tattos \
+    && mkdir -p /app/logs && chown -R tattos:tattos /app
+
+# Alterne para o usuário não-root com segurança
 USER tattos
 
-# Copia o artefato JAR gerado no estágio de build
-COPY --from=builder /app/build/libs/*.jar app.jar
+# Copia o artefato JAR gerado no estágio de build mantendo as permissões corretas
+COPY --from=builder --chown=tattos:tattos /app/build/libs/*.jar app.jar
 
 EXPOSE 8080
 
