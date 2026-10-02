@@ -36,23 +36,33 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .headers(headers -> headers
+                .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'"))
+                .frameOptions(frame -> frame.deny())
+                .xssProtection(xss -> xss.disable())
+                .httpStrictTransportSecurity(hsts -> hsts
+                    .includeSubDomains(true)
+                    .maxAgeInSeconds(31536000)
+                )
+            )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/error").permitAll()
+                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                
+
                 // Módulo Financeiro
                 .requestMatchers("/api/financeiro/**", "/api/financial/**").hasAnyRole("GESTOR", "TATUADOR")
-                
+
                 // Módulo de Estoque e Insumos
                 .requestMatchers("/api/estoque/**", "/api/stock/**").hasAnyRole("GESTOR", "TATUADOR")
-                
+
                 // Módulo de Fichas de Anamnese
                 .requestMatchers("/api/fichas-anamnese/**", "/api/anamnese/**").hasAnyRole("GESTOR", "TATUADOR", "CLIENTE")
-                
+
                 // Módulo de Agendamentos
                 .requestMatchers("/api/agendamentos/**", "/api/appointments/**", "/api/sessions/**").hasAnyRole("GESTOR", "TATUADOR", "CLIENTE")
-                
+
                 // Todas as outras rotas exigem autenticação
                 .anyRequest().authenticated()
             )
@@ -74,7 +84,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("*"));
+        configuration.setAllowedOriginPatterns(List.of("http://localhost:3000", "https://tattos-frontend.example.com"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"));
         configuration.setExposedHeaders(List.of("Authorization"));

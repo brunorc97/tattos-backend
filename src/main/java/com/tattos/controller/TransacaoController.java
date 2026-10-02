@@ -6,11 +6,16 @@ import com.tattos.dto.response.TransacaoResponseDTO;
 import com.tattos.model.enums.StatusTransacao;
 import com.tattos.model.enums.TipoTransacao;
 import com.tattos.service.TransacaoService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -18,6 +23,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
+@Tag(name = "Financeiro", description = "Transações financeiras, balanço mensal e repasses de comissão")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping({"/api/financeiro", "/api/financial"})
 @RequiredArgsConstructor
@@ -25,7 +32,10 @@ public class TransacaoController {
 
     private final TransacaoService transacaoService;
 
+    @Operation(summary = "Listar transações", description = "Filtra transações por tipo, tatuador, status e período.")
+    @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso")
     @GetMapping({"/transacoes", "/transactions"})
+    @PreAuthorize("hasAnyRole('GESTOR','TATUADOR')")
     public ResponseEntity<List<TransacaoResponseDTO>> listar(
             @RequestParam(required = false) TipoTransacao tipo,
             @RequestParam(required = false) Long tatuadorId,
@@ -35,34 +45,42 @@ public class TransacaoController {
         return ResponseEntity.ok(transacaoService.listar(tipo, tatuadorId, status, inicio, fim));
     }
 
+    @Operation(summary = "Buscar transação por ID")
+    @ApiResponse(responseCode = "200", description = "Transação encontrada")
+    @ApiResponse(responseCode = "404", description = "Transação não encontrada")
     @GetMapping({"/transacoes/{id}", "/transactions/{id}"})
+    @PreAuthorize("hasAnyRole('GESTOR','TATUADOR')")
     public ResponseEntity<TransacaoResponseDTO> buscarPorId(@PathVariable Long id) {
         return ResponseEntity.ok(transacaoService.buscarPorId(id));
     }
 
+    @Operation(summary = "Criar transação financeira")
+    @ApiResponse(responseCode = "201", description = "Transação criada")
     @PostMapping({"/transacoes", "/transactions"})
+    @PreAuthorize("hasAnyRole('GESTOR','TATUADOR')")
     public ResponseEntity<TransacaoResponseDTO> criar(@Valid @RequestBody TransacaoRequestDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(transacaoService.criar(dto));
     }
 
-    /**
-     * Dashboard Gerencial "Smile Now, Cry Later"
-     * Apresenta o balanço mensal confrontando faturamento bruto com custos e repasses.
-     */
+    @Operation(
+        summary = "Balanço mensal",
+        description = "Dashboard financeiro: faturamento bruto vs custos e repasses (\"Smile Now, Cry Later\")."
+    )
+    @ApiResponse(responseCode = "200", description = "Balanço calculado com sucesso")
     @GetMapping({"/balanco", "/summary"})
+    @PreAuthorize("hasRole('GESTOR')")
     public ResponseEntity<BalancoFinanceiroDTO> obterBalancoMensal(
             @RequestParam(required = false) Integer mes,
             @RequestParam(required = false) Integer ano) {
         int mesResolvido = (mes != null) ? mes : LocalDate.now().getMonthValue();
         int anoResolvido = (ano != null) ? ano : LocalDate.now().getYear();
-
         return ResponseEntity.ok(transacaoService.obterBalancoMensal(mesResolvido, anoResolvido));
     }
 
-    /**
-     * Total de repasses de comissão devidos a um determinado tatuador no período.
-     */
+    @Operation(summary = "Calcular repasse de tatuador", description = "Retorna o total de comissão devida a um tatuador no período.")
+    @ApiResponse(responseCode = "200", description = "Repasse calculado")
     @GetMapping({"/repasses/{tatuadorId}", "/splits/{tatuadorId}"})
+    @PreAuthorize("hasRole('GESTOR')")
     public ResponseEntity<Map<String, Object>> calcularRepasse(
             @PathVariable Long tatuadorId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
@@ -76,7 +94,10 @@ public class TransacaoController {
         ));
     }
 
+    @Operation(summary = "Deletar transação")
+    @ApiResponse(responseCode = "204", description = "Deletada com sucesso")
     @DeleteMapping({"/transacoes/{id}", "/transactions/{id}"})
+    @PreAuthorize("hasRole('GESTOR')")
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
         transacaoService.deletar(id);
         return ResponseEntity.noContent().build();

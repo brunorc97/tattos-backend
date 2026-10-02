@@ -1,5 +1,7 @@
-# Estágio 1: Build da aplicação
-FROM eclipse-temurin:25-jdk AS builder
+# syntax=docker/dockerfile:1
+
+# ── Estágio 1: Build ─────────────────────────────────────────
+FROM --platform=$BUILDPLATFORM eclipse-temurin:25-jdk AS builder
 WORKDIR /app
 
 # Copia arquivos do Gradle para aproveitar cache de camadas
@@ -9,14 +11,14 @@ COPY gradle ./gradle
 # Garante permissão de execução para o gradlew
 RUN chmod +x ./gradlew
 
-# Baixa as dependências
+# Baixa dependências (falha silenciosa se offline)
 RUN ./gradlew dependencies --no-daemon || true
 
 # Copia o código-fonte e compila o projeto
 COPY src ./src
 RUN ./gradlew bootJar --no-daemon -x test
 
-# Estágio 2: Imagem final de execução
+# ── Estágio 2: Runtime ───────────────────────────────────────
 FROM eclipse-temurin:25-jre
 WORKDIR /app
 
@@ -29,4 +31,8 @@ COPY --from=builder /app/build/libs/*.jar app.jar
 
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", \
+  "-XX:+UseContainerSupport", \
+  "-XX:MaxRAMPercentage=75.0", \
+  "-Djava.security.egd=file:/dev/./urandom", \
+  "-jar", "app.jar"]
