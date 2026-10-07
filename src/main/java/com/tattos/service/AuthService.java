@@ -34,6 +34,23 @@ public class AuthService {
 
     @Transactional
     public UsuarioResponseDTO register(RegisterRequestDTO request) {
+        UserRole role = request.getRole() != null ? request.getRole() : UserRole.ROLE_CLIENTE;
+
+        // Impede o cadastro público de gestores e tatuadores por esta rota[span_2](start_span)[span_2](end_span)
+        if (role == UserRole.ROLE_GESTOR || role == UserRole.ROLE_TATUADOR) {
+            throw new BusinessException("Cadastros de gestores e tatuadores devem ser realizados por um gestor autenticado.");
+        }
+
+        return processarRegistro(request, role);
+    }
+
+    @Transactional
+    public UsuarioResponseDTO registrarFuncionario(RegisterRequestDTO request) {
+        UserRole role = request.getRole() != null ? request.getRole() : UserRole.ROLE_CLIENTE;
+        return processarRegistro(request, role);
+    }
+
+    private UsuarioResponseDTO processarRegistro(RegisterRequestDTO request, UserRole role) {
         String email = request.getEmail() != null ? request.getEmail().trim().toLowerCase() : null;
         if (email == null || email.isEmpty()) {
             throw new BusinessException("O email é obrigatório.");
@@ -52,8 +69,6 @@ public class AuthService {
         if (rawSenha.isEmpty()) {
             throw new BusinessException("A senha é obrigatória.");
         }
-
-        UserRole role = request.getRole() != null ? request.getRole() : UserRole.ROLE_CLIENTE;
 
         Usuario usuario = switch (role) {
             case ROLE_TATUADOR -> Tatuador.builder()
