@@ -1,220 +1,559 @@
-# TattOS ERP — Back‑end
+TattOS ERP - Sistema de Gestão Integrada para Estúdios de Tatuagem e Body Art
+Desenvolvido para estúdios de tatuagem e profissionais independentes de tatuagem e body art.
 
-> ERP distribuído para estúdios de tatuagem e artistas independentes de *body art*.
-> Unifica gestão operacional (agendamentos, biossegurança) e financeira (fluxo de caixa, estoque).
+O projeto surgiu a partir da necessidade de centralizar processos que normalmente são realizados de forma descentralizada, utilizando planilhas, aplicativos de mensagens e controles manuais.
 
----
+A proposta do TattOS é reunir, em uma única plataforma, recursos para:
+* gerenciamento de agendamentos;
+* gerenciamento de clientes e profissionais;
+* fichas de anamnese e informações relacionadas à biossegurança;
+* controle de insumos e estoque;
+* controle financeiro;
+* autenticação e autorização por perfil de usuário;
+* organização dos processos administrativos do estúdio.
 
-## Stack Tecnológica
 
-| Camada | Tecnologia |
-|---|---|
-| Linguagem | Java 25 (LTS) |
-| Framework | Spring Boot 4.0.8 |
-| Segurança | Spring Security 7 + JWT (JJWT 0.12.6) |
-| Persistência | Spring Data JPA / Hibernate + MySQL 8.4 |
-| Migrations | Flyway |
-| Documentação | Springdoc OpenAPI 2.6 (Swagger UI) |
-| Build | Gradle 9.7 |
-| Containers | Docker + Docker Compose |
-| CI/CD | GitHub Actions |
-| Front‑end (planejado) | React 18 |
+Principais módulos
 
----
+Módulo	Descrição	Status
+Autenticação	Login, registro e autenticação via JWT	✅
+Agendamentos	Controle de sessões e horários	✅
+Anamnese	Fichas de anamnese dos clientes	✅
+Estoque	Controle de insumos utilizados pelo estúdio	✅
+Financeiro	Registro de receitas e despesas	✅
+Usuários	Gestão de usuários e perfis de acesso	✅
+API REST	Endpoints documentados via OpenAPI	✅
+Segurança	JWT, BCrypt, CORS e Security Headers	✅
+Testes	Testes automatizados	✅
+Docker	Ambiente conteinerizado	✅
+CI/CD	Pipeline automatizado	✅
+Front-end	Interface web React	🔄 Em andamento
 
-## Arquitetura
+ Arquitetura
 
-```
-tattos-backend/
-├── config/          # SecurityConfig, OpenApiConfig
-├── controller/      # REST Controllers (Auth, Agendamento, Insumo, Transacao, FichaAnamnese, Usuario)
-├── dto/             # Request/Response DTOs
-├── exception/       # GlobalExceptionHandler + exceções de domínio
-├── model/           # Entidades JPA (Usuario, Agendamento, Insumo, TransacaoFinanceira, FichaAnamnese…)
-├── repository/      # Spring Data JPA Repositories
-├── security/        # JwtTokenProvider, JwtAuthenticationFilter, CustomUserDetailsService
-└── service/         # Regras de negócio
-```
+O back-end foi desenvolvido seguindo uma arquitetura baseada na separação de responsabilidades entre Controllers, Services, Repositories e Models, utilizando o padrão de desenvolvimento oferecido pelo ecossistema Spring.
 
-### Módulos funcionais
+                        ┌─────────────────────┐
+                        │     Cliente / UI    │
+                        │   Front-end React   │
+                        └──────────┬──────────┘
+                                   │
+                                   │ HTTP / REST
+                                   ▼
+                        ┌─────────────────────┐
+                        │    REST Controller  │
+                        │                     │
+                        │ Auth / Agendamento  │
+                        │ Estoque / Financeiro│
+                        │ Anamnese / Usuários │
+                        └──────────┬──────────┘
+                                   │
+                                   ▼
+                        ┌─────────────────────┐
+                        │       Service       │
+                        │                     │
+                        │ Regras de negócio   │
+                        │ Validações          │
+                        │ Processamentos      │
+                        └──────────┬──────────┘
+                                   │
+                                   ▼
+                        ┌─────────────────────┐
+                        │     Repository      │
+                        │                     │
+                        │ Spring Data JPA     │
+                        │ Hibernate           │
+                        └──────────┬──────────┘
+                                   │
+                                   ▼
+                        ┌─────────────────────┐
+                        │      MySQL 8.4      │
+                        │                     │
+                        │ Banco de dados      │
+                        └─────────────────────┘
 
-| Módulo | Endpoints base | Roles permitidas |
-|---|---|---|
-| Autenticação | `/api/auth/**` | Público |
-| Agendamentos | `/api/agendamentos/**` | GESTOR, TATUADOR, CLIENTE |
-| Fichas de Anamnese | `/api/fichas-anamnese/**` | GESTOR, TATUADOR, CLIENTE |
-| Insumos / Estoque | `/api/estoque/**` | GESTOR, TATUADOR |
-| Financeiro | `/api/financeiro/**` | GESTOR, TATUADOR |
+Organização do código
 
----
+src/
+└── main/
+    └── java/
+        └── .../
+            ├── config/
+            │   ├── SecurityConfig
+            │   └── OpenApiConfig
+            │
+            ├── controller/
+            │   ├── AuthController
+            │   ├── AgendamentoController
+            │   ├── EstoqueController
+            │   ├── FinanceiroController
+            │   ├── FichaAnamneseController
+            │   └── UsuarioController
+            │
+            ├── dto/
+            │   ├── request/
+            │   └── response/
+            │
+            ├── exception/
+            │   └── GlobalExceptionHandler
+            │
+            ├── model/
+            │   ├── Usuario
+            │   ├── Agendamento
+            │   ├── Insumo
+            │   ├── TransacaoFinanceira
+            │   └── FichaAnamnese
+            │
+            ├── repository/
+            │
+            ├── security/
+            │   ├── JwtTokenProvider
+            │   ├── JwtAuthenticationFilter
+            │   └── CustomUserDetailsService
+            │
+            └── service/
 
-## Sprints
+⸻
 
-| Sprint | Status | Descrição |
-|---|---|---|
-| Sprint 0 | ✅ Concluída | Setup do projeto, Docker, Gradle, configuração inicial |
-| Sprint 1 | ✅ Concluída | Entidades de domínio, migrations Flyway, repositórios |
-| Sprint 2 | ✅ Concluída | Controllers REST, DTOs, serviços, GlobalExceptionHandler |
-| Sprint 3 | ✅ Concluída | JWT, Spring Security, testes unitários, CI/CD base |
-| Sprint 4 | 🔄 Em andamento | Segurança avançada, OpenAPI/Swagger, logs estruturados, prod profile, CORS robusto |
+Stack tecnológica
 
----
+Categoria	Tecnologia
+Linguagem	Java 25 LTS
+Framework	Spring Boot 4.0.8
+Segurança	Spring Security 7
+Autenticação	JWT / JJWT 0.12.6
+Persistência	Spring Data JPA
+ORM	Hibernate
+Banco de dados	MySQL 8.4
+Migrations	Flyway
+Documentação da API	Springdoc OpenAPI / Swagger
+Build	Gradle 9.7
+Containerização	Docker
+Orquestração local	Docker Compose
+Testes	JUnit / Spring Test
+Cobertura	JaCoCo
+CI/CD	GitHub Actions
+Front-end	React 18 — planejado
 
-## Pré‑requisitos
 
-- **Docker** ≥ 24 e **Docker Compose** ≥ 2.20
-- **Make** (opcional, para atalhos)
-- Java 25 + Gradle (apenas para desenvolvimento local sem Docker)
+Segurança
 
----
+A segurança é um dos componentes centrais do TattOS.
+A API utiliza autenticação stateless baseada em JWT, permitindo que cada requisição protegida seja validada através do token de autenticação.
 
-## Execução via Docker (recomendado)
+Recursos implementados
 
-```bash
-# Clonar o repositório
-git clone https://github.com/seu-usuario/tattos-backend.git
+* Autenticação via JWT;
+* Senhas armazenadas utilizando BCrypt;
+* Controle de acesso baseado em roles;
+* Spring Security;
+* CORS configurável;
+* Security Headers;
+* CSP;
+* X-Frame-Options;
+* HSTS;
+* Auditoria de eventos de segurança;
+* Segredos externos através de variáveis de ambiente.
+
+Perfis de acesso
+
+                    ┌───────────────┐
+                    │    GESTOR     │
+                    └───────┬───────┘
+                            │
+              ┌─────────────┼─────────────┐
+              ▼             ▼             ▼
+          Usuários       Estoque      Financeiro
+              │
+              ▼
+         Agendamentos
+                    ┌───────────────┐
+                    │   TATUADOR    │
+                    └───────┬───────┘
+                            │
+              ┌─────────────┼─────────────┐
+              ▼             ▼             ▼
+        Agendamentos     Anamnese      Estoque
+                    ┌───────────────┐
+                    │    CLIENTE    │
+                    └───────┬───────┘
+                            │
+                 ┌──────────┴──────────┐
+                 ▼                     ▼
+           Agendamentos             Anamnese
+
+⸻
+
+Controle de acesso
+
+Módulo	Endpoint base	GESTOR	TATUADOR	CLIENTE
+Autenticação	/api/auth/**	✅	✅	✅
+Agendamentos	/api/agendamentos/**	✅	✅	✅
+Anamnese	/api/fichas-anamnese/**	✅	✅	✅
+Estoque	/api/estoque/**	✅	✅	❌
+Financeiro	/api/financeiro/**	✅	✅	❌
+Usuários	/api/usuarios/**	✅	❌	❌
+
+⸻
+
+Banco de dados
+
+O projeto utiliza MySQL 8.4 como banco de dados relacional.
+
+A evolução do schema é controlada pelo Flyway, permitindo versionar alterações estruturais do banco juntamente com o código da aplicação.
+
+                    TattOS API
+                        │
+                        ▼
+                Spring Data JPA
+                        │
+                        ▼
+                    Hibernate
+                        │
+                        ▼
+                    MySQL 8.4
+                        ▲
+                        │
+                     Flyway
+                 Database Migrations
+
+Principais entidades
+
+* Usuario
+* Agendamento
+* FichaAnamnese
+* Insumo
+* TransacaoFinanceira
+
+⸻
+
+Evolução do projeto
+
+O desenvolvimento foi organizado em sprints, permitindo a implementação incremental das funcionalidades.
+
+Sprint	Objetivo	Status
+Sprint 0	Setup do projeto, Gradle, Docker e estrutura inicial	✅
+Sprint 1	Modelagem das entidades, banco e migrations	✅
+Sprint 2	Controllers, DTOs, Services e tratamento de exceções	✅
+Sprint 3	Autenticação JWT, Spring Security e testes	✅
+Sprint 4	OpenAPI, segurança avançada, logs e configuração de produção	🔄
+
+⸻
+
+Como executar
+
+Pré-requisitos
+
+Para executar o projeto utilizando Docker:
+
+* Docker 24+
+* Docker Compose 2.20+
+* Git
+* Make — opcional, utilizado para atalhos
+
+O projeto também pode ser executado localmente utilizando Java 25 e Gradle.
+
+⸻
+
+1. Clonar o projeto
+
+git clone https://github.com/brunocorrea-97/tattos-backend.git
 cd tattos-backend
 
-# Subir todos os serviços (back‑end + MySQL) – usa a plataforma nativa (ARM64) em Apple Silicon
+⸻
+
+2. Executar com Docker
+
+A forma recomendada para avaliação é utilizar o Docker Compose.
+
 make run
-```
 
-### Variáveis de ambiente
+O comando realiza o build da aplicação e inicializa os containers necessários.
 
-As variáveis abaixo podem ser sobrescritas via **`.env`** ou diretamente no `docker‑compose.yml`:
+Sem Make
 
-| Variável | Padrão (dev) | Descrição |
-|---|---|---|
-| `DB_HOST` | `db` | Host do MySQL |
-| `DB_PORT` | `3306` | Porta do MySQL |
-| `DB_NAME` | `tattos_db` | Nome do banco |
-| `DB_USERNAME` | `root` | Usuário do banco |
-| `DB_PASSWORD` | `root` | Senha do banco |
-| `JWT_SECRET` | *(valor dev)* | Segredo para assinar tokens JWT (mín. 32 chars) |
-| `SPRING_PROFILES_ACTIVE` | `dev` | Profile ativo (`dev` ou `prod`) |
-| `CORS_ALLOWED_ORIGINS` | `http://localhost:3000` | Origens permitidas – pode ser uma lista separada por vírgula |
+Caso o ambiente não possua o make instalado:
 
-> ⚠️ **Em produção**, sempre forneça `JWT_SECRET` e `CORS_ALLOWED_ORIGINS` via variáveis de ambiente e **não** comite segredos no repositório.
+docker compose up -d --build
 
----
+⸻
 
-## Execução local (sem Docker)
+Containers
 
-```bash
-# Requer MySQL rodando localmente (ou use o perfil dev com H2)
-./gradlew bootRun --args='--spring.profiles.active=dev'
-```
+Após a inicialização, a aplicação será executada através dos serviços definidos no Docker Compose.
 
-> **Dica:** crie um arquivo `.env` na raiz e exporte as variáveis antes de iniciar a aplicação.
+┌──────────────────────────────────────┐
+│             Docker Compose           │
+│                                      │
+│  ┌────────────────┐                  │
+│  │ TattOS Backend │                  │
+│  │   Spring Boot  │                  │
+│  │     :8080      │                  │
+│  └───────┬────────┘                  │
+│          │                            │
+│          ▼                            │
+│  ┌────────────────┐                  │
+│  │     MySQL      │                  │
+│  │      :3306     │                  │
+│  └────────────────┘                  │
+│                                      │
+└──────────────────────────────────────┘
 
----
+⸻
 
-## Documentação da API
+Variáveis de ambiente
 
-Com os containers rodando, acesse:
+As principais configurações podem ser fornecidas através de variáveis de ambiente.
 
-- **Swagger UI:** [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
-- **OpenAPI JSON:** [http://localhost:8080/v3/api-docs](http://localhost:8080/v3/api-docs)
+Variável	Padrão de desenvolvimento	Descrição
+DB_HOST	db	Host do MySQL
+DB_PORT	3306	Porta do MySQL
+DB_NAME	tattos_db	Nome do banco
+DB_USERNAME	root	Usuário do banco
+DB_PASSWORD	root	Senha do banco
+JWT_SECRET	Valor de desenvolvimento	Chave utilizada para assinatura do JWT
+SPRING_PROFILES_ACTIVE	dev	Profile da aplicação
+CORS_ALLOWED_ORIGINS	http://localhost:3000	Origens autorizadas
 
-### Testando endpoints protegidos
-1. `POST /api/auth/login` → obtenha o `token` JWT.
-2. No Swagger UI clique em **Authorize** e cole `Bearer <token>`.
-3. Explore os endpoints — as anotações OpenAPI exibem descrições, códigos de resposta e requisitos de segurança.
+ Importante: valores sensíveis utilizados em produção não devem ser versionados no Git.
 
----
+⸻
 
-## Actuator & Healthchecks
+ Documentação da API
 
-O Spring Actuator está habilitado e expõe endpoints sob `/actuator`.
+A API utiliza OpenAPI para documentação dos endpoints.
 
-```bash
-# Verificar health do serviço (usado também pelo healthcheck do Docker)
-curl http://localhost:8080/actuator/health
-```
+Com a aplicação em execução:
 
-O **Actuator** roda na mesma porta (8080) em desenvolvimento e na porta **8081** em produção (configurado em `application‑prod.yml`).
+Swagger UI
 
----
+http://localhost:8080/swagger-ui.html
 
-## Logs estruturados
+OpenAPI JSON
 
-- **Aplicação:** `logs/tattos-application.log` (JSON via Logstash encoder)
-- **Auditoria de segurança:** `logs/tattos-security.log`
+http://localhost:8080/v3/api-docs
 
-```bash
-# Visualizar logs em tempo real
-tail -f logs/tattos-application.log
-tail -f logs/tattos-security.log
-```
+O Swagger permite visualizar e testar os endpoints diretamente pelo navegador.
 
----
+⸻
 
-## Testes
+ Autenticação
 
-```bash
-# Executar todos os testes unitários
+Para acessar endpoints protegidos:
+1. Realizar login: POST /api/auth/login
+Exemplo:
+{
+  "email": "admin@tattos.com",
+  "password": "admin123"
+}
+
+2. Receber o JWT
+A API retorna um token de autenticação.
+
+3. Autorizar no Swagger
+No Swagger UI:
+
+Authorize
+    ↓
+Bearer <SEU_TOKEN>
+
+Depois disso, os endpoints protegidos podem ser executados diretamente pela interface do Swagger.
+
+⸻
+
+Contas para avaliação
+O banco de desenvolvimento possui usuários previamente cadastrados para facilitar a avaliação do projeto.
+
+As credenciais abaixo são exclusivamente para ambiente acadêmico/desenvolvimento.
+
+| ID | Nome / Apelido | E-mail de Login | Perfil / Cargo | Senha (Plain) | Senha Criptografada (BCrypt) |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **1** | Administrador Gestor | `admin@tattos.com` | **GESTOR** (Gestor Executivo) | `admin123` | `$2a$10$rNzVnwOUyJkXVl.T9/8QvOAUFlxFPGHdf2louNuQ1q/f4b7QeV4N.` |
+| **2** | Carlos Gerente | `gerente@tattos.com` | **GESTOR** (Gerente de Operações) | `admin123` | `$2a$10$rNzVnwOUyJkXVl.T9/8QvOAUFlxFPGHdf2louNuQ1q/f4b7QeV4N.` |
+| **3** | Mãozinha Leve | `maozinha@tattos.com` | **TATUADOR** (Microrealismo & Fine Line) | `admin123` | `$2a$10$rNzVnwOUyJkXVl.T9/8QvOAUFlxFPGHdf2louNuQ1q/f4b7QeV4N.` |
+| **4** | Bracinho Curto | `bracinhocurto@tattos.com` | **TATUADOR** (Old School & Bold Line) | `admin123` | `$2a$10$rNzVnwOUyJkXVl.T9/8QvOAUFlxFPGHdf2louNuQ1q/f4b7QeV4N.` |
+| **5** | Agulha de Ouro | `agulhadeouro@tattos.com` | **TATUADOR** (Realismo Preto e Cinza) | `admin123` | `$2a$10$rNzVnwOUyJkXVl.T9/8QvOAUFlxFPGHdf2louNuQ1q/f4b7QeV4N.` |
+| **6** | Treme-Treme | `tremetreme@tattos.com` | **TATUADOR** (Tribal & Geek) | `admin123` | `$2a$10$rNzVnwOUyJkXVl.T9/8QvOAUFlxFPGHdf2louNuQ1q/f4b7QeV4N.` |
+| **7** | Carlos Silva | `cliente@tattos.com` | **CLIENTE** | `cliente123` | `$2a$10$rNzVnwOUyJkXVl.T9/8QvOAUFlxFPGHdf2louNuQ1q/f4b7QeV4N.` |
+| **8** | Mariana Costa | `mariana@email.com` | **CLIENTE** | `cliente123` | `$2a$10$rNzVnwOUyJkXVl.T9/8QvOAUFlxFPGHdf2louNuQ1q/f4b7QeV4N.` |
+| **9** | Roberto "Bob" Mendes | `bob@email.com` | **CLIENTE** | `cliente123` | `$2a$10$rNzVnwOUyJkXVl.T9/8QvOAUFlxFPGHdf2louNuQ1q/f4b7QeV4N.` |
+
+
+⸻
+
+Testes - Os testes automatizados podem ser executados através do Gradle Wrapper.
+
+Executar testes
 ./gradlew test
 
-# Relatório de cobertura
+Gerar relatório de cobertura
 ./gradlew test jacocoTestReport
-```
 
----
+O relatório de cobertura será disponibilizado no diretório:
+build/reports/jacoco/test/html/
 
-## Makefile — Atalhos disponíveis
 
-| Comando | Descrição |
-|---|---|
-| `make run` | Build + sobe todos os containers |
-| `make stop` | Para e remove os containers |
-| `make logs` | Exibe logs do back‑end |
-| `make build` | Apenas faz o build da imagem Docker |
 
----
 
-## CI/CD
+Health Check
 
-O pipeline GitHub Actions (`.github/workflows/ci‑cd.yml`) executa automaticamente a cada push/PR em `main`:
+A aplicação disponibiliza um endpoint de monitoramento através do Spring Actuator.
 
-1. Setup do JDK 25 e Gradle
-2. Testes unitários
-3. Checagem de vulnerabilidades (OWASP Dependency‑Check)
-4. Build do JAR e da imagem Docker (multi‑arch: amd64 + arm64)
-5. Upload de artefatos (JAR, relatórios OWASP)
+GET /actuator/health
 
----
+Ou:
 
-## Segurança
+curl http://localhost:8080/actuator/health
 
-- **JWT stateless** – sem sessão no servidor
-- **BCrypt** para hash de senhas
-- **Roles** – `TATUADOR`, `GESTOR`, `CLIENTE`
-- **CORS** configurado via `CORS_ALLOWED_ORIGINS` (variável de ambiente) e aplicado em `SecurityConfig`
-- **CSP, X‑Frame‑Options, HSTS** via Spring Security Headers
-- **Secrets** externalizados via variáveis de ambiente (perfil `prod`)
-- **Auditoria** de eventos de segurança via Logback JSON
+Resposta esperada:
 
----
+{
+  "status": "UP"
+}
 
-## Contribuindo
+Esse endpoint também pode ser utilizado pelos mecanismos de healthcheck do ambiente Docker.
 
-1. Fork o repositório
-2. Crie uma branch `feature/<nome>`
-3. Rode os testes: `./gradlew test`
-4. Execute o scanner de vulnerabilidades: `./gradlew dependencyCheckAnalyze`
-5. Abra um Pull Request descrevendo as mudanças e incluindo screenshots (se houver UI)
+⸻
 
----
+Logs
 
-## Roadmap (próximos passos)
+A aplicação utiliza logs estruturados para facilitar diagnóstico e auditoria.
 
-- Monitoramento com Prometheus & Grafana
-- Deploy em Kubernetes (Helm Chart)
-- Multi‑tenant support para múltiplos estúdios
-- Integração com serviços de pagamento (Stripe, PayPal)
+Principais arquivos:
 
----
+logs/
+├── tattos-application.log
+└── tattos-security.log
 
-## Licença
+Para acompanhar os logs em tempo real:
 
-MIT © TattOS Team
+tail -f logs/tattos-application.log
+
+ou:
+
+tail -f logs/tattos-security.log
+
+⸻
+
+Makefile
+
+O projeto possui um Makefile para simplificar os comandos mais utilizados durante o desenvolvimento.
+
+Comando	Descrição
+make help	Exibe todos os comandos disponíveis
+make run	Build + inicia os containers
+make run-logs	Inicia os containers exibindo os logs
+make stop	Para e remove os containers
+make restart	Reinicia os serviços
+make logs	Exibe os logs
+make logs-app	Exibe os logs da aplicação
+make logs-db	Exibe os logs do MySQL
+make db	Acessa o container do banco
+make build	Realiza o build
+make test	Executa os testes
+make clean	Limpa artefatos de build
+
+Para visualizar os comandos:
+
+make help
+
+Caso o sistema não possua o make, os comandos Docker podem ser executados diretamente utilizando docker compose.
+
+⸻
+
+CI/CD
+
+O projeto possui integração contínua utilizando GitHub Actions.
+
+O pipeline é executado automaticamente em eventos configurados no repositório, como push e pull request.
+
+Pipeline
+
+        Push / Pull Request
+                │
+                ▼
+        ┌───────────────┐
+        │ GitHub Actions│
+        └───────┬───────┘
+                │
+        ┌───────▼───────┐
+        │ Setup Java 25 │
+        └───────┬───────┘
+                │
+        ┌───────▼───────┐
+        │     Tests     │
+        └───────┬───────┘
+                │
+        ┌───────▼────────────┐
+        │ Security / OWASP   │
+        └───────┬────────────┘
+                │
+        ┌───────▼──────────┐
+        │   Build JAR      │
+        └───────┬──────────┘
+                │
+        ┌───────▼──────────┐
+        │ Docker Image     │
+        └──────────────────┘
+
+⸻
+
+Qualidade e boas práticas
+
+Durante o desenvolvimento foram aplicados conceitos de:
+
+* Arquitetura em camadas;
+* Separação de responsabilidades;
+* DTOs para comunicação da API;
+* Tratamento global de exceções;
+* Validação de dados;
+* Versionamento de banco;
+* Autenticação e autorização;
+* Testes automatizados;
+* Conteinerização;
+* Integração contínua;
+* Documentação de API;
+* Externalização de configurações;
+* Controle de versão com Git.
+
+⸻
+
+Roadmap
+
+Funcionalidades planejadas para futuras versões:
+
+* Desenvolvimento do front-end em React;
+* Dashboard gerencial;
+* Relatórios financeiros;
+* Alertas de estoque mínimo;
+* Interface responsiva;
+* Sistema de notificações;
+* Integração com meios de pagamento;
+* Monitoramento com Prometheus e Grafana;
+* Deploy em ambiente cloud;
+* Orquestração com Kubernetes;
+* Suporte multiestúdio / multi-tenant.
+
+⸻
+
+Conceitos aplicados
+
+O projeto utiliza conhecimentos relacionados às seguintes áreas:
+
+                    TattOS ERP
+                        │
+        ┌───────────────┼────────────────┐
+        │               │                │
+        ▼               ▼                ▼
+ Engenharia         Backend           Banco de Dados
+ de Software
+        │               │                │
+        ├─ Arquitetura  ├─ REST API      ├─ MySQL
+        ├─ Git          ├─ Spring Boot   ├─ JPA
+        ├─ CI/CD        ├─ Security      └─ Flyway
+        └─ Testes       └─ JWT
+
+⸻
+
+Tecnologias principais:
+Java • Spring Boot • Spring Security • JWT • JPA • Hibernate • MySQL • Flyway • Docker • Gradle • GitHub Actions
