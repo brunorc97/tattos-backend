@@ -15,14 +15,14 @@ services:
       - DB_NAME=${DB_NAME:-tattos_db}
       - DB_USERNAME=${DB_USERNAME:-root}
       - DB_PASSWORD=${DB_PASSWORD:-root}
-      - JWT_SECRET=${JWT_SECRET:-minha-chave-secreta-super-segura-para-jwt-tattos-2026-com-no-minimo-32-caracteres}
+      - JWT_SECRET=${JWT_SECRET:-dev-only-change-this-jwt-secret-before-deploying}
     depends_on:
       db:
         condition: service_healthy
     networks:
       - tattos-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health || curl -fsS http://localhost:8081/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 3

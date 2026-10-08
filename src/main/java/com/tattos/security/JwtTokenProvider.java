@@ -23,7 +23,7 @@ public class JwtTokenProvider {
     private final long expirationTime;
 
     public JwtTokenProvider(
-            @Value("${jwt.secret:minha-chave-secreta-super-segura-para-jwt-tattos-2026-com-no-minimo-32-caracteres}") String secret,
+            @Value("${jwt.secret}") String secret,
             @Value("${jwt.expiration:86400000}") long expirationTime) {
         byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
         this.key = Keys.hmacShaKeyFor(keyBytes);

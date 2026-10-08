@@ -305,17 +305,17 @@ Variáveis de ambiente
 
 As principais configurações podem ser fornecidas através de variáveis de ambiente.
 
-Variável	Padrão de desenvolvimento	Descrição
+Variável	Padrão local	Descrição
 DB_HOST	db	Host do MySQL
 DB_PORT	3306	Porta do MySQL
 DB_NAME	tattos_db	Nome do banco
-DB_USERNAME	root	Usuário do banco
-DB_PASSWORD	root	Senha do banco
-JWT_SECRET	Valor de desenvolvimento	Chave utilizada para assinatura do JWT
+DB_USERNAME	root (somente local)	Usuário do banco
+DB_PASSWORD	root (somente local)	Senha do banco
+JWT_SECRET	Chave local de desenvolvimento	Chave para assinatura do JWT
 SPRING_PROFILES_ACTIVE	dev	Profile da aplicação
 CORS_ALLOWED_ORIGINS	http://localhost:3000	Origens autorizadas
 
- Importante: valores sensíveis utilizados em produção não devem ser versionados no Git.
+O Docker Compose usa os valores locais acima para facilitar o desenvolvimento sem arquivo `.env`. Em produção, defina `DB_USERNAME`, `DB_PASSWORD` e `JWT_SECRET` seguros no ambiente ou em `.env`; nunca use os valores padrão locais.
 
 ⸻
 
