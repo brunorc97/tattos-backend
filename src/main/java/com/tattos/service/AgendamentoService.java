@@ -23,6 +23,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -52,6 +53,12 @@ public class AgendamentoService {
 
         BigDecimal desconto = calcularDescontoIndicacao(dto.getCodigoIndicacao(), cliente.getId(), dto.getValor());
 
+        BigDecimal sinal = (dto.getValorSinal() != null && dto.getValorSinal().compareTo(BigDecimal.ZERO) > 0)
+                ? dto.getValorSinal()
+                : (dto.getValor() != null ? dto.getValor().multiply(new BigDecimal("0.20")).setScale(2, RoundingMode.HALF_UP) : BigDecimal.ZERO);
+
+        String pixCopiaECola = "00020126580014BR.GOV.BCB.PIX0136tattos-pix-sinal-" + UUID.randomUUID().toString().substring(0, 8) + "5204000053039865802BR5910TATTOS ERP6009SAO PAULO62070503***6304";
+
         Agendamento agendamento = Agendamento.builder()
                 .cliente(cliente)
                 .tatuador(tatuador)
@@ -61,10 +68,47 @@ public class AgendamentoService {
                 .cabine(dto.getCabine().trim())
                 .status(StatusAgendamento.AGENDADO)
                 .valor(dto.getValor())
-                .valorSinal(dto.getValorSinal() != null ? dto.getValorSinal() : BigDecimal.ZERO)
+                .valorSinal(sinal)
+                .sinalPago(false)
+                .codigoPixSinal(pixCopiaECola)
                 .descontoAplicado(desconto)
                 .observacoes(dto.getObservacoes())
                 .build();
+
+        Agendamento salvo = agendamentoRepository.save(agendamento);
+        return AgendamentoResponseDTO.fromEntity(salvo);
+    }
+
+    @Transactional
+    public AgendamentoResponseDTO confirmarPagamentoSinal(Long id) {
+        Agendamento agendamento = agendamentoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Agendamento não encontrado com ID: " + id));
+
+        // Idempotência: Se o sinal já estiver marcado como pago, retorna sem duplicar lançamento
+        if (agendamento.isSinalPago()) {
+            return AgendamentoResponseDTO.fromEntity(agendamento);
+        }
+
+        agendamento.setSinalPago(true);
+        if (agendamento.getStatus() == StatusAgendamento.AGENDADO) {
+            agendamento.setStatus(StatusAgendamento.CONFIRMADO);
+        }
+
+        // Gera a transação financeira de receita do sinal recebido via PIX
+        if (agendamento.getValorSinal() != null && agendamento.getValorSinal().compareTo(BigDecimal.ZERO) > 0) {
+            TransacaoFinanceira transacaoSinal = TransacaoFinanceira.builder()
+                    .descricao("Sinal Recebido (PIX) - Agendamento #" + agendamento.getId() + " (" + agendamento.getCliente().getNome() + ")")
+                    .valor(agendamento.getValorSinal())
+                    .tipo(TipoTransacao.RECEITA)
+                    .data(LocalDate.now())
+                    .tatuador(agendamento.getTatuador())
+                    .agendamento(agendamento)
+                    .categoria("Sinal Reserva")
+                    .formaPagamento("PIX")
+                    .build();
+            transacaoSinal.calcularRepasse();
+            transacaoRepository.save(transacaoSinal);
+        }
 
         Agendamento salvo = agendamentoRepository.save(agendamento);
         return AgendamentoResponseDTO.fromEntity(salvo);
@@ -123,13 +167,21 @@ public class AgendamentoService {
 
         // Se o agendamento foi realizado com sucesso, gera a receita financeira com repasse
         if (novoStatus == StatusAgendamento.REALIZADO && agendamento.getValor() != null) {
-            BigDecimal valorLiquido = agendamento.getValor().subtract(
-                    agendamento.getDescontoAplicado() != null ? agendamento.getDescontoAplicado() : BigDecimal.ZERO
-            );
+            BigDecimal desconto = agendamento.getDescontoAplicado() != null ? agendamento.getDescontoAplicado() : BigDecimal.ZERO;
+            BigDecimal valorLiquidoTotal = agendamento.getValor().subtract(desconto);
+
+            // Deduz o sinal que já foi recebido previamente para evitar duplicidade de receita
+            BigDecimal valorSaldoRestante = valorLiquidoTotal;
+            if (agendamento.isSinalPago() && agendamento.getValorSinal() != null) {
+                valorSaldoRestante = valorSaldoRestante.subtract(agendamento.getValorSinal());
+            }
+            if (valorSaldoRestante.compareTo(BigDecimal.ZERO) < 0) {
+                valorSaldoRestante = BigDecimal.ZERO;
+            }
 
             TransacaoFinanceira transacao = TransacaoFinanceira.builder()
-                    .descricao("Procedimento Concluído - Agendamento #" + agendamento.getId() + " (" + agendamento.getCliente().getNome() + ")")
-                    .valor(valorLiquido)
+                    .descricao("Procedimento Concluído (Saldo) - Agendamento #" + agendamento.getId() + " (" + agendamento.getCliente().getNome() + ")")
+                    .valor(valorSaldoRestante)
                     .tipo(TipoTransacao.RECEITA)
                     .data(LocalDate.now())
                     .tatuador(agendamento.getTatuador())

@@ -2,6 +2,7 @@ package com.tattos.service;
 
 import com.tattos.dto.request.TransacaoRequestDTO;
 import com.tattos.dto.response.BalancoFinanceiroDTO;
+import com.tattos.dto.response.FechamentoComissaoDTO;
 import com.tattos.dto.response.TransacaoResponseDTO;
 import com.tattos.exception.ResourceNotFoundException;
 import com.tattos.model.Agendamento;
@@ -20,6 +21,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -86,6 +88,60 @@ public class TransacaoService {
         LocalDate dataFim = fim != null ? fim : YearMonth.from(dataInicio).atEndOfMonth();
 
         return transacaoRepository.sumRepassesByTatuadorAndPeriodo(tatuadorId, dataInicio, dataFim);
+    }
+
+    /**
+     * Gera o demonstrativo detalhado e fechamento de comissões por período do tatuador.
+     */
+    @Transactional(readOnly = true)
+    public FechamentoComissaoDTO gerarFechamentoComissoes(Long tatuadorId, LocalDate inicio, LocalDate fim) {
+        Usuario tatuador = usuarioRepository.findById(tatuadorId)
+                .orElseThrow(() -> new ResourceNotFoundException("Tatuador não encontrado com ID: " + tatuadorId));
+
+        LocalDate dataInicio = inicio != null ? inicio : LocalDate.now().withDayOfMonth(1);
+        LocalDate dataFim = fim != null ? fim : YearMonth.from(dataInicio).atEndOfMonth();
+
+        List<TransacaoFinanceira> transacoes = transacaoRepository.findComFiltros(
+                TipoTransacao.RECEITA, tatuadorId, StatusTransacao.CONCLUIDO, dataInicio, dataFim
+        );
+
+        BigDecimal totalBruto = BigDecimal.ZERO;
+        BigDecimal totalRepasse = BigDecimal.ZERO;
+        List<FechamentoComissaoDTO.ItemComissaoDTO> itens = new ArrayList<>();
+
+        for (TransacaoFinanceira t : transacoes) {
+            BigDecimal bruto = t.getValor() != null ? t.getValor() : BigDecimal.ZERO;
+            BigDecimal repasse = t.getValorRepasse() != null ? t.getValorRepasse() : BigDecimal.ZERO;
+            totalBruto = totalBruto.add(bruto);
+            totalRepasse = totalRepasse.add(repasse);
+
+            itens.add(FechamentoComissaoDTO.ItemComissaoDTO.builder()
+                    .transacaoId(t.getId())
+                    .agendamentoId(t.getAgendamento() != null ? t.getAgendamento().getId() : null)
+                    .data(t.getData())
+                    .descricao(t.getDescricao())
+                    .valorBruto(bruto)
+                    .comissaoPercentual(t.getComissaoPercentual())
+                    .valorRepasse(repasse)
+                    .formaPagamento(t.getFormaPagamento())
+                    .build());
+        }
+
+        BigDecimal retidoEstudio = totalBruto.subtract(totalRepasse);
+
+        return FechamentoComissaoDTO.builder()
+                .tatuadorId(tatuador.getId())
+                .tatuadorNome(tatuador.getNome())
+                .especialidade(tatuador.getEspecialidade())
+                .comissaoPercentualPadrao(tatuador.getComissaoPercentual())
+                .periodoInicio(dataInicio)
+                .periodoFim(dataFim)
+                .totalAtendimentos(itens.size())
+                .totalBruto(totalBruto)
+                .totalComissaoRepasse(totalRepasse)
+                .totalRetidoEstudio(retidoEstudio)
+                .itens(itens)
+                .build();
     }
 
     /**

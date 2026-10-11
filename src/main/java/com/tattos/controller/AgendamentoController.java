@@ -82,6 +82,14 @@ public class AgendamentoController {
         return ResponseEntity.ok(agendamentoService.atualizarStatus(id, dto.getStatus(), dto.getMotivoCancelamento()));
     }
 
+    @Operation(summary = "Confirmar pagamento de sinal PIX", description = "Confirma a compensação do sinal e altera o status para CONFIRMADO")
+    @ApiResponse(responseCode = "200", description = "Sinal compensado com sucesso")
+    @PostMapping("/{id}/confirmar-sinal")
+    @PreAuthorize("hasAnyRole('GESTOR','TATUADOR','CLIENTE')")
+    public ResponseEntity<AgendamentoResponseDTO> confirmarPagamentoSinal(@PathVariable Long id) {
+        return ResponseEntity.ok(agendamentoService.confirmarPagamentoSinal(id));
+    }
+
     @Operation(summary = "Deletar agendamento")
     @ApiResponse(responseCode = "204", description = "Deletado com sucesso")
     @DeleteMapping("/{id}")

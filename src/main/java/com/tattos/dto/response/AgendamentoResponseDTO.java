@@ -24,6 +24,8 @@ public class AgendamentoResponseDTO {
     private StatusAgendamento status;
     private BigDecimal valor;
     private BigDecimal valorSinal;
+    private boolean sinalPago;
+    private String codigoPixSinal;
     private BigDecimal descontoAplicado;
     private BigDecimal valorFinal;
     private String observacoes;
@@ -56,6 +58,8 @@ public class AgendamentoResponseDTO {
                 .status(a.getStatus())
                 .valor(valorBase)
                 .valorSinal(a.getValorSinal())
+                .sinalPago(a.isSinalPago())
+                .codigoPixSinal(a.getCodigoPixSinal())
                 .descontoAplicado(desconto)
                 .valorFinal(valorFinal)
                 .observacoes(a.getObservacoes())

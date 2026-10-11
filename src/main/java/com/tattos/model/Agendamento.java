@@ -57,6 +57,17 @@ public class Agendamento {
     @Column(name = "desconto_aplicado", nullable = false, precision = 10, scale = 2)
     private BigDecimal descontoAplicado = BigDecimal.ZERO;
 
+    @Builder.Default
+    @Column(name = "lembrete_enviado", nullable = false)
+    private boolean lembreteEnviado = false;
+
+    @Builder.Default
+    @Column(name = "sinal_pago", nullable = false)
+    private boolean sinalPago = false;
+
+    @Column(name = "codigo_pix_sinal")
+    private String codigoPixSinal;
+
     @Column(columnDefinition = "TEXT")
     private String observacoes;
 

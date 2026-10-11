@@ -2,6 +2,7 @@ package com.tattos.service;
 
 import com.tattos.dto.request.TransacaoRequestDTO;
 import com.tattos.dto.response.BalancoFinanceiroDTO;
+import com.tattos.dto.response.FechamentoComissaoDTO;
 import com.tattos.dto.response.TransacaoResponseDTO;
 import com.tattos.model.Tatuador;
 import com.tattos.model.enums.TipoTransacao;

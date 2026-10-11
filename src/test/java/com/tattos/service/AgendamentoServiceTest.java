@@ -288,4 +288,72 @@ class AgendamentoServiceTest {
         assertEquals(BigDecimal.ZERO, response.getDescontoAplicado());
         assertEquals(new BigDecimal("600.00"), response.getValorFinal());
     }
+
+    @Test
+    @DisplayName("Deve gerar sinal de 20% e código PIX quando valor do sinal não for informado")
+    void deveGerarSinalAutomaticoEPix() {
+        LocalDateTime dataHora = LocalDateTime.now().plusDays(2).withHour(11).withMinute(0);
+
+        AgendamentoRequestDTO dto = AgendamentoRequestDTO.builder()
+                .clienteId(cliente.getId())
+                .tatuadorId(tatuador.getId())
+                .dataHora(dataHora)
+                .duracaoMinutos(60)
+                .cabine("Cabine 01")
+                .valor(new BigDecimal("500.00"))
+                .build();
+
+        AgendamentoResponseDTO response = agendamentoService.criar(dto);
+
+        assertEquals(new BigDecimal("100.00"), response.getValorSinal()); // 20% de 500
+        assertFalse(response.isSinalPago());
+        assertNotNull(response.getCodigoPixSinal());
+        assertTrue(response.getCodigoPixSinal().contains("BR.GOV.BCB.PIX"));
+    }
+
+    @Test
+    @DisplayName("Deve confirmar sinal via PIX, conciliar receita e abater na conclusão da sessão")
+    void deveConfirmarSinalEConciliarReceita() {
+        LocalDateTime dataHora = LocalDateTime.now().plusDays(2).withHour(14).withMinute(0);
+
+        AgendamentoRequestDTO dto = AgendamentoRequestDTO.builder()
+                .clienteId(cliente.getId())
+                .tatuadorId(tatuador.getId())
+                .dataHora(dataHora)
+                .duracaoMinutos(120)
+                .cabine("Cabine 01")
+                .valor(new BigDecimal("1000.00"))
+                .valorSinal(new BigDecimal("200.00"))
+                .build();
+
+        AgendamentoResponseDTO criado = agendamentoService.criar(dto);
+        assertEquals(StatusAgendamento.AGENDADO, criado.getStatus());
+        assertFalse(criado.isSinalPago());
+
+        // 1. Confirma pagamento de sinal
+        AgendamentoResponseDTO comSinalPago = agendamentoService.confirmarPagamentoSinal(criado.getId());
+        assertEquals(StatusAgendamento.CONFIRMADO, comSinalPago.getStatus());
+        assertTrue(comSinalPago.isSinalPago());
+
+        var transacoesAposSinal = transacaoRepository.findAll();
+        assertEquals(1, transacoesAposSinal.size());
+        assertEquals(new BigDecimal("200.00"), transacoesAposSinal.get(0).getValor());
+        assertEquals("PIX", transacoesAposSinal.get(0).getFormaPagamento());
+
+        // Idempotência do sinal: chamada repetida não duplica transação
+        agendamentoService.confirmarPagamentoSinal(criado.getId());
+        assertEquals(1, transacaoRepository.findAll().size());
+
+        // 2. Conclui agendamento: deve gerar apenas a receita do saldo restante (1000 - 200 = 800)
+        agendamentoService.atualizarStatus(criado.getId(), StatusAgendamento.REALIZADO, null);
+        var transacoesFinais = transacaoRepository.findAll();
+        assertEquals(2, transacoesFinais.size());
+
+        BigDecimal totalRecebido = transacoesFinais.stream()
+                .map(com.tattos.model.TransacaoFinanceira::getValor)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // Conciliação perfeita: R$ 200 (sinal) + R$ 800 (saldo restante) = R$ 1000 (total)
+        assertEquals(new BigDecimal("1000.00"), totalRecebido);
+    }
 }

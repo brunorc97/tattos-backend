@@ -2,6 +2,7 @@ package com.tattos.controller;
 
 import com.tattos.dto.request.TransacaoRequestDTO;
 import com.tattos.dto.response.BalancoFinanceiroDTO;
+import com.tattos.dto.response.FechamentoComissaoDTO;
 import com.tattos.dto.response.TransacaoResponseDTO;
 import com.tattos.model.enums.StatusTransacao;
 import com.tattos.model.enums.TipoTransacao;
@@ -92,6 +93,17 @@ public class TransacaoController {
                 "periodoFim", fim != null ? fim.toString() : "Fim do mês atual",
                 "totalRepasse", totalRepasse
         ));
+    }
+
+    @Operation(summary = "Relatório de fechamento de comissões do tatuador", description = "Gera o demonstrativo detalhado de comissões acumuladas por período para repasse.")
+    @ApiResponse(responseCode = "200", description = "Relatório gerado com sucesso")
+    @GetMapping({"/comissoes/{tatuadorId}/fechamento", "/commissions/{tatuadorId}/statement"})
+    @PreAuthorize("hasAnyRole('GESTOR','TATUADOR')")
+    public ResponseEntity<FechamentoComissaoDTO> gerarFechamentoComissoes(
+            @PathVariable Long tatuadorId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fim) {
+        return ResponseEntity.ok(transacaoService.gerarFechamentoComissoes(tatuadorId, inicio, fim));
     }
 
     @Operation(summary = "Deletar transação")

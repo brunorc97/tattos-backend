@@ -21,6 +21,14 @@ public interface AgendamentoRepository extends JpaRepository<Agendamento, Long> 
 
     List<Agendamento> findByDataHoraBetween(LocalDateTime inicio, LocalDateTime fim);
 
+    @Query("SELECT a FROM Agendamento a WHERE a.status IN :statusList " +
+           "AND a.lembreteEnviado = false " +
+           "AND a.dataHora BETWEEN :inicio AND :fim")
+    List<Agendamento> findAgendamentosPendentesLembrete(
+            @Param("statusList") List<StatusAgendamento> statusList,
+            @Param("inicio") LocalDateTime inicio,
+            @Param("fim") LocalDateTime fim);
+
     @Query("SELECT a FROM Agendamento a WHERE " +
            "(:tatuadorId IS NULL OR a.tatuador.id = :tatuadorId) AND " +
            "(:clienteId IS NULL OR a.cliente.id = :clienteId) AND " +
