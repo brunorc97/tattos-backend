@@ -69,6 +69,9 @@ public class Usuario implements UserDetails {
     @Column(name = "comissao_percentual", precision = 5, scale = 2)
     private BigDecimal comissaoPercentual = new BigDecimal("70.00");
 
+    @Column(name = "codigo_indicacao", length = 20, unique = true)
+    private String codigoIndicacao;
+
     @Builder.Default
     @Column(nullable = false)
     private boolean ativo = true;

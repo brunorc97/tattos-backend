@@ -2,6 +2,7 @@ package com.tattos.service;
 
 import com.tattos.dto.request.AgendamentoRequestDTO;
 import com.tattos.dto.response.AgendamentoResponseDTO;
+import com.tattos.exception.BusinessException;
 import com.tattos.exception.ConflictException;
 import com.tattos.model.Cliente;
 import com.tattos.model.Tatuador;
@@ -184,5 +185,107 @@ class AgendamentoServiceTest {
         assertEquals(1, transacoes.size());
         assertEquals(new BigDecimal("1000.00"), transacoes.get(0).getValor());
         assertEquals(new BigDecimal("700.00"), transacoes.get(0).getValorRepasse()); // 70% de 1000.00
+    }
+
+    @Test
+    @DisplayName("Deve aplicar 10% de desconto quando código de indicação válido for fornecido")
+    void deveAplicarDezPorCentoDeDescontoComCodigoValido() {
+        Cliente amigo = Cliente.builder()
+                .nome("Amigo Que Indicou")
+                .email("amigo@teste.com")
+                .senha("hash123")
+                .codigoIndicacao("TATTO-AMIGO1")
+                .ativo(true)
+                .build();
+        usuarioRepository.save(amigo);
+
+        LocalDateTime dataHora = LocalDateTime.now().plusDays(2).withHour(15).withMinute(0);
+
+        AgendamentoRequestDTO dto = AgendamentoRequestDTO.builder()
+                .clienteId(cliente.getId())
+                .tatuadorId(tatuador.getId())
+                .dataHora(dataHora)
+                .duracaoMinutos(60)
+                .cabine("Cabine 02")
+                .valor(new BigDecimal("500.00"))
+                .codigoIndicacao("TATTO-AMIGO1")
+                .build();
+
+        AgendamentoResponseDTO response = agendamentoService.criar(dto);
+
+        assertNotNull(response.getId());
+        assertEquals(new BigDecimal("500.00"), response.getValor());
+        assertEquals(new BigDecimal("50.00"), response.getDescontoAplicado());
+        assertEquals(new BigDecimal("450.00"), response.getValorFinal());
+
+        // Concluir agendamento e verificar que a receita reflete o valor líquido com desconto
+        agendamentoService.atualizarStatus(response.getId(), StatusAgendamento.REALIZADO, null);
+        var transacoes = transacaoRepository.findAll();
+        assertEquals(1, transacoes.size());
+        assertEquals(new BigDecimal("450.00"), transacoes.get(0).getValor());
+        assertEquals(new BigDecimal("315.00"), transacoes.get(0).getValorRepasse()); // 70% de 450.00
+    }
+
+    @Test
+    @DisplayName("Deve rejeitar agendamento quando cliente tentar usar seu próprio código de indicação")
+    void deveRejeitarAutoIndicacao() {
+        cliente.setCodigoIndicacao("TATTO-PROPRIO");
+        usuarioRepository.save(cliente);
+
+        LocalDateTime dataHora = LocalDateTime.now().plusDays(2).withHour(17).withMinute(0);
+
+        AgendamentoRequestDTO dto = AgendamentoRequestDTO.builder()
+                .clienteId(cliente.getId())
+                .tatuadorId(tatuador.getId())
+                .dataHora(dataHora)
+                .duracaoMinutos(60)
+                .cabine("Cabine 02")
+                .valor(new BigDecimal("400.00"))
+                .codigoIndicacao("TATTO-PROPRIO")
+                .build();
+
+        BusinessException ex = assertThrows(BusinessException.class, () -> agendamentoService.criar(dto));
+        assertEquals("Não é permitido utilizar o próprio código de indicação.", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("Deve rejeitar agendamento quando código de indicação for inexistente")
+    void deveRejeitarCodigoIndicacaoInexistente() {
+        LocalDateTime dataHora = LocalDateTime.now().plusDays(2).withHour(18).withMinute(0);
+
+        AgendamentoRequestDTO dto = AgendamentoRequestDTO.builder()
+                .clienteId(cliente.getId())
+                .tatuadorId(tatuador.getId())
+                .dataHora(dataHora)
+                .duracaoMinutos(60)
+                .cabine("Cabine 02")
+                .valor(new BigDecimal("300.00"))
+                .codigoIndicacao("TATTO-INEXISTENTE")
+                .build();
+
+        BusinessException ex = assertThrows(BusinessException.class, () -> agendamentoService.criar(dto));
+        assertEquals("Código de indicação inválido.", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("Deve criar agendamento com desconto zero quando nenhum código for informado")
+    void deveCriarAgendamentoSemDescontoQuandoNenhumCodigoInformado() {
+        LocalDateTime dataHora = LocalDateTime.now().plusDays(2).withHour(19).withMinute(0);
+
+        AgendamentoRequestDTO dto = AgendamentoRequestDTO.builder()
+                .clienteId(cliente.getId())
+                .tatuadorId(tatuador.getId())
+                .dataHora(dataHora)
+                .duracaoMinutos(60)
+                .cabine("Cabine 02")
+                .valor(new BigDecimal("600.00"))
+                .codigoIndicacao(null)
+                .build();
+
+        AgendamentoResponseDTO response = agendamentoService.criar(dto);
+
+        assertEquals(new BigDecimal("600.00"), response.getValor());
+        assertEquals(BigDecimal.ZERO, response.getDescontoAplicado());
+        assertEquals(new BigDecimal("600.00"), response.getValorFinal());
     }
 }

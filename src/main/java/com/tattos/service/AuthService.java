@@ -23,6 +23,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -89,8 +91,20 @@ public class AuthService {
         usuario.setEndereco(request.getResolvedEndereco());
         usuario.setAtivo(true);
 
+        if (role == UserRole.ROLE_CLIENTE || usuario.getCodigoIndicacao() == null) {
+            usuario.setCodigoIndicacao(gerarCodigoIndicacaoUnico());
+        }
+
         Usuario salvo = usuarioRepository.save(usuario);
         return UsuarioResponseDTO.fromEntity(salvo);
+    }
+
+    private String gerarCodigoIndicacaoUnico() {
+        String codigo;
+        do {
+            codigo = "TATTO-" + UUID.randomUUID().toString().replace("-", "").substring(0, 6).toUpperCase();
+        } while (usuarioRepository.existsByCodigoIndicacao(codigo));
+        return codigo;
     }
 
     @Transactional(readOnly = true)

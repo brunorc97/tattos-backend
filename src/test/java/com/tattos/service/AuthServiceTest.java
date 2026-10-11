@@ -49,7 +49,7 @@ class AuthServiceTest {
                 .comissaoPercentual(new BigDecimal("70.00"))
                 .build();
 
-        UsuarioResponseDTO response = authService.register(request);
+        UsuarioResponseDTO response = authService.registrarFuncionario(request);
 
         assertNotNull(response.getId());
         assertEquals("Rodrigo Sanches", response.getNome());
@@ -57,6 +57,25 @@ class AuthServiceTest {
         assertEquals(UserRole.ROLE_TATUADOR, response.getRole());
         assertEquals("Lettering & Realismo", response.getEspecialidade());
         assertEquals(new BigDecimal("70.00"), response.getComissaoPercentual());
+    }
+
+    @Test
+    @DisplayName("Deve gerar código único de indicação automaticamente para novo cliente")
+    void deveGerarCodigoIndicacaoParaNovoCliente() {
+        RegisterRequestDTO request = RegisterRequestDTO.builder()
+                .nome("Maria Silva")
+                .email("maria.silva@tattos.com")
+                .senha("segredo123")
+                .role(UserRole.ROLE_CLIENTE)
+                .telefone("(11) 91234-5678")
+                .build();
+
+        UsuarioResponseDTO response = authService.register(request);
+
+        assertNotNull(response.getId());
+        assertNotNull(response.getCodigoIndicacao());
+        assertTrue(response.getCodigoIndicacao().startsWith("TATTO-"));
+        assertTrue(usuarioRepository.existsByCodigoIndicacao(response.getCodigoIndicacao()));
     }
 
     @Test
@@ -92,7 +111,7 @@ class AuthServiceTest {
                 .cargo("Diretor Geral")
                 .build();
 
-        authService.register(reg);
+        authService.registrarFuncionario(reg);
 
         LoginRequestDTO login = LoginRequestDTO.builder()
                 .email("admin.teste@tattos.com")

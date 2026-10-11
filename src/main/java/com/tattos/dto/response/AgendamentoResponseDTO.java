@@ -24,6 +24,8 @@ public class AgendamentoResponseDTO {
     private StatusAgendamento status;
     private BigDecimal valor;
     private BigDecimal valorSinal;
+    private BigDecimal descontoAplicado;
+    private BigDecimal valorFinal;
     private String observacoes;
 
     private Long clienteId;
@@ -41,6 +43,10 @@ public class AgendamentoResponseDTO {
 
     public static AgendamentoResponseDTO fromEntity(Agendamento a) {
         if (a == null) return null;
+        BigDecimal valorBase = a.getValor() != null ? a.getValor() : BigDecimal.ZERO;
+        BigDecimal desconto = a.getDescontoAplicado() != null ? a.getDescontoAplicado() : BigDecimal.ZERO;
+        BigDecimal valorFinal = valorBase.subtract(desconto);
+
         return AgendamentoResponseDTO.builder()
                 .id(a.getId())
                 .dataHora(a.getDataHora())
@@ -48,8 +54,10 @@ public class AgendamentoResponseDTO {
                 .duracaoMinutos(a.getDuracaoMinutos())
                 .cabine(a.getCabine())
                 .status(a.getStatus())
-                .valor(a.getValor())
+                .valor(valorBase)
                 .valorSinal(a.getValorSinal())
+                .descontoAplicado(desconto)
+                .valorFinal(valorFinal)
                 .observacoes(a.getObservacoes())
                 .clienteId(a.getCliente() != null ? a.getCliente().getId() : null)
                 .clienteNome(a.getCliente() != null ? a.getCliente().getNome() : null)

@@ -26,6 +26,7 @@ public class UsuarioResponseDTO {
     private String bio;
     private String cargo;
     private BigDecimal comissaoPercentual;
+    private String codigoIndicacao;
     private boolean ativo;
     private LocalDateTime createdAt;
 
@@ -42,6 +43,7 @@ public class UsuarioResponseDTO {
                 .bio(u.getBio())
                 .cargo(u.getCargo())
                 .comissaoPercentual(u.getComissaoPercentual())
+                .codigoIndicacao(u.getCodigoIndicacao())
                 .ativo(u.isAtivo())
                 .createdAt(u.getCreatedAt())
                 .build();

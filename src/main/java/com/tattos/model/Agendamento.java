@@ -53,6 +53,10 @@ public class Agendamento {
     @Column(name = "valor_sinal", nullable = false, precision = 10, scale = 2)
     private BigDecimal valorSinal = BigDecimal.ZERO;
 
+    @Builder.Default
+    @Column(name = "desconto_aplicado", nullable = false, precision = 10, scale = 2)
+    private BigDecimal descontoAplicado = BigDecimal.ZERO;
+
     @Column(columnDefinition = "TEXT")
     private String observacoes;
 

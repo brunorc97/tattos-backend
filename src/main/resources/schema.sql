@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     bio TEXT,
     cargo VARCHAR(100),
     comissao_percentual DECIMAL(5, 2) DEFAULT 70.00,
+    codigo_indicacao VARCHAR(20) UNIQUE,
     ativo BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -29,6 +30,7 @@ CREATE TABLE IF NOT EXISTS agendamentos (
     status VARCHAR(30) NOT NULL DEFAULT 'AGENDADO',
     valor DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
     valor_sinal DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    desconto_aplicado DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
     observacoes TEXT,
     cliente_id BIGINT NOT NULL,
     tatuador_id BIGINT NOT NULL,

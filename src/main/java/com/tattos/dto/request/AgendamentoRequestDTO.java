@@ -41,5 +41,7 @@ public class AgendamentoRequestDTO {
     @Builder.Default
     private BigDecimal valorSinal = BigDecimal.ZERO;
 
+    private String codigoIndicacao;
+
     private String observacoes;
 }

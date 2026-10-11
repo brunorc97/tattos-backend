@@ -17,6 +17,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -48,6 +50,8 @@ public class AgendamentoService {
 
         validarConflitos(tatuador.getId(), dto.getCabine(), inicio, fim, null);
 
+        BigDecimal desconto = calcularDescontoIndicacao(dto.getCodigoIndicacao(), cliente.getId(), dto.getValor());
+
         Agendamento agendamento = Agendamento.builder()
                 .cliente(cliente)
                 .tatuador(tatuador)
@@ -57,7 +61,8 @@ public class AgendamentoService {
                 .cabine(dto.getCabine().trim())
                 .status(StatusAgendamento.AGENDADO)
                 .valor(dto.getValor())
-                .valorSinal(dto.getValorSinal() != null ? dto.getValorSinal() : java.math.BigDecimal.ZERO)
+                .valorSinal(dto.getValorSinal() != null ? dto.getValorSinal() : BigDecimal.ZERO)
+                .descontoAplicado(desconto)
                 .observacoes(dto.getObservacoes())
                 .build();
 
@@ -94,6 +99,10 @@ public class AgendamentoService {
         agendamento.setCabine(dto.getCabine().trim());
         agendamento.setValor(dto.getValor());
         agendamento.setValorSinal(dto.getValorSinal());
+        if (dto.getCodigoIndicacao() != null && !dto.getCodigoIndicacao().trim().isEmpty()) {
+            BigDecimal desconto = calcularDescontoIndicacao(dto.getCodigoIndicacao(), cliente.getId(), dto.getValor());
+            agendamento.setDescontoAplicado(desconto);
+        }
         agendamento.setObservacoes(dto.getObservacoes());
 
         Agendamento atualizado = agendamentoRepository.save(agendamento);
@@ -114,9 +123,13 @@ public class AgendamentoService {
 
         // Se o agendamento foi realizado com sucesso, gera a receita financeira com repasse
         if (novoStatus == StatusAgendamento.REALIZADO && agendamento.getValor() != null) {
+            BigDecimal valorLiquido = agendamento.getValor().subtract(
+                    agendamento.getDescontoAplicado() != null ? agendamento.getDescontoAplicado() : BigDecimal.ZERO
+            );
+
             TransacaoFinanceira transacao = TransacaoFinanceira.builder()
                     .descricao("Procedimento Concluído - Agendamento #" + agendamento.getId() + " (" + agendamento.getCliente().getNome() + ")")
-                    .valor(agendamento.getValor())
+                    .valor(valorLiquido)
                     .tipo(TipoTransacao.RECEITA)
                     .data(LocalDate.now())
                     .tatuador(agendamento.getTatuador())
@@ -169,5 +182,20 @@ public class AgendamentoService {
         if (agendamentoRepository.existeConflitoCabine(cabine.trim(), inicio, fim, id)) {
             throw new ConflictException("Conflito de espaço: a cabine '" + cabine.trim() + "' já está ocupada neste intervalo.");
         }
+    }
+
+    private BigDecimal calcularDescontoIndicacao(String codigoIndicacao, Long clienteId, BigDecimal valorBase) {
+        if (codigoIndicacao == null || codigoIndicacao.trim().isEmpty() || valorBase == null) {
+            return BigDecimal.ZERO;
+        }
+
+        Usuario indicador = usuarioRepository.findByCodigoIndicacao(codigoIndicacao.trim().toUpperCase())
+                .orElseThrow(() -> new BusinessException("Código de indicação inválido."));
+
+        if (indicador.getId().equals(clienteId)) {
+            throw new BusinessException("Não é permitido utilizar o próprio código de indicação.");
+        }
+
+        return valorBase.multiply(new BigDecimal("0.10")).setScale(2, RoundingMode.HALF_UP);
     }
 }
