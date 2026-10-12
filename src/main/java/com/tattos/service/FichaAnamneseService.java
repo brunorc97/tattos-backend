@@ -2,15 +2,18 @@ package com.tattos.service;
 
 import com.tattos.dto.request.FichaAnamneseRequestDTO;
 import com.tattos.dto.response.FichaAnamneseResponseDTO;
+import com.tattos.dto.request.AssinaturaRequestDTO;
 import com.tattos.exception.BusinessException;
 import com.tattos.exception.ResourceNotFoundException;
 import com.tattos.model.Agendamento;
 import com.tattos.model.FichaAnamnese;
 import com.tattos.model.Usuario;
-import com.tattos.repository.AgendamentoRepository;
-import com.tattos.repository.FichaAnamneseRepository;
-import com.tattos.dto.request.AssinaturaRequestDTO;
 import com.tattos.model.AssinaturaLog;
+import com.tattos.repository.FichaAnamneseRepository;
+import com.tattos.repository.UsuarioRepository;
+import com.tattos.repository.AgendamentoRepository;
+import com.tattos.repository.AssinaturaLogRepository;
+import com.tattos.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,14 +33,14 @@ public class FichaAnamneseService {
 
     @Transactional
     public void assinarTermo(Long fichaId, AssinaturaRequestDTO dto) {
-        // Load ficha
+        // Carrega a ficha
         FichaAnamnese ficha = fichaRepository.findById(fichaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ficha de anamnese não encontrada com ID: " + fichaId));
-        // Mark term as signed
+        // Marca o termo como assinado
         ficha.setTermoAssinado(true);
-        // Persist change
+        // Persiste a alteração
         fichaRepository.save(ficha);
-        // Create log entry
+        // Cria registro de log
         AssinaturaLog log = AssinaturaLog.builder()
                 .fichaAnamnese(ficha)
                 .dataAssinatura(LocalDateTime.now())
@@ -45,10 +48,12 @@ public class FichaAnamneseService {
                 .usuario(dto.getUsuarioId() != null ? usuarioRepository.findById(dto.getUsuarioId()).orElse(null) : null)
                 .build();
         assinaturaLogRepository.save(log);
-        // Placeholder email log
+        // Log de e‑mail (placeholder)
         emailService.logAssinaturaEnviada(fichaId);
     }
 
+    @Transactional
+    public FichaAnamneseResponseDTO criar(FichaAnamneseRequestDTO dto) {
         Usuario cliente = usuarioRepository.findById(dto.getClienteId())
                 .orElseThrow(() -> new ResourceNotFoundException("Cliente não encontrado com ID: " + dto.getClienteId()));
 
@@ -78,7 +83,7 @@ public class FichaAnamneseService {
                 .dataCriacao(LocalDateTime.now())
                 .build();
 
-        // Avaliação clínica automática de biossegurança
+        // Avaliação automática de alertas clínicos
         ficha.avaliarAlertasClinicos();
 
         FichaAnamnese salva = fichaRepository.save(ficha);
@@ -126,7 +131,7 @@ public class FichaAnamneseService {
         if (fichas.isEmpty()) {
             return false;
         }
-        // Retorna false se tiver alerta clínico ativo
+        // Retorna false se houver alerta clínico ativo
         return fichas.stream().noneMatch(f -> Boolean.TRUE.equals(f.getAlertaClinico()));
     }
 }

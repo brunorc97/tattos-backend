@@ -1,5 +1,6 @@
 package com.tattos.service;
 
+import com.tattos.dto.request.AgendamentoRequestDTO;
 import com.tattos.dto.request.PixSinalRequestDTO;
 import com.tattos.dto.request.FinalPaymentRequestDTO;
 import com.tattos.dto.response.PixSinalResponseDTO;
@@ -39,27 +40,19 @@ public class AgendamentoService {
     public AgendamentoResponseDTO criar(AgendamentoRequestDTO dto) {
         Usuario cliente = usuarioRepository.findById(dto.getClienteId())
                 .orElseThrow(() -> new ResourceNotFoundException("Cliente não encontrado com ID: " + dto.getClienteId()));
-
         Usuario tatuador = usuarioRepository.findById(dto.getTatuadorId())
                 .orElseThrow(() -> new ResourceNotFoundException("Tatuador não encontrado com ID: " + dto.getTatuadorId()));
-
         if (!tatuador.isTatuador()) {
             throw new BusinessException("O usuário informado como tatuador não possui o perfil de TATUADOR.");
         }
-
         LocalDateTime inicio = dto.getDataHora();
         int duracao = (dto.getDuracaoMinutos() != null && dto.getDuracaoMinutos() > 0) ? dto.getDuracaoMinutos() : 60;
         LocalDateTime fim = inicio.plusMinutes(duracao);
-
         validarConflitos(tatuador.getId(), dto.getCabine(), inicio, fim, null);
-
         BigDecimal desconto = calcularDescontoIndicacao(dto.getCodigoIndicacao(), cliente.getId(), dto.getValor());
-
         // Valor do sinal será definido ao gerar o PIX via endpoint específico
         BigDecimal sinal = BigDecimal.ZERO;
-
         String pixCopiaECola = "00020126580014BR.GOV.BCB.PIX0136tattos-pix-sinal-" + UUID.randomUUID().toString().substring(0, 8) + "5204000053039865802BR5910TATTOS ERP6009SAO PAULO62070503***6304";
-
         Agendamento agendamento = Agendamento.builder()
                 .cliente(cliente)
                 .tatuador(tatuador)
@@ -75,19 +68,10 @@ public class AgendamentoService {
                 .descontoAplicado(desconto)
                 .observacoes(dto.getObservacoes())
                 .build();
-
         Agendamento salvo = agendamentoRepository.save(agendamento);
         return AgendamentoResponseDTO.fromEntity(salvo);
     }
 
-    /**
-     * Retorna o código PIX Copia e Cola do sinal para o agendamento informado.
-     * Lança ResourceNotFoundException se o agendamento não existir.
-     */
-    /**
-     * Gera o código PIX do sinal com base no percentual informado.
-     * O percentual deve estar entre 10 e 50.
-     */
     @Transactional
     public PixSinalResponseDTO gerarPixSinal(Long id, PixSinalRequestDTO request) {
         if (request.getPercentual() == null) {
@@ -105,21 +89,19 @@ public class AgendamentoService {
         BigDecimal valorSinal = agendamento.getValor()
                 .multiply(new BigDecimal(perc).divide(new BigDecimal(100)))
                 .setScale(2, RoundingMode.HALF_UP);
-        // Gerar código PIX placeholder (não está integrado a serviço externo)
-        String pix = "00020126580014BR.GOV.BCB.PIX0136tattos-pix-sinal-" + UUID.randomUUID().toString().substring(0, 8)
-                + "5204000053039865802BR5910TATTOS ERP6009SAO PAULO62070503***6304";
+        String pix = "00020126580014BR.GOV.BCB.PIX0136tattos-pix-sinal-" + UUID.randomUUID().toString().substring(0, 8) + "5204000053039865802BR5910TATTOS ERP6009SAO PAULO62070503***6304";
         agendamento.setValorSinal(valorSinal);
         agendamento.setCodigoPixSinal(pix);
         agendamentoRepository.save(agendamento);
+        // Constrói o DTO de resposta com os campos corretos
+        Long valorCentavos = valorSinal.movePointRight(2).longValueExact();
         return PixSinalResponseDTO.builder()
-                .codigoPix(pix)
-                .valorSinal(valorSinal)
+                .codigo(pix)
+                .valorCentavos(valorCentavos)
+                .percentual(perc)
                 .build();
     }
 
-    /**
-     * Marca o sinal como pago e registra a data de pagamento.
-     */
     @Transactional
     public void marcarSinalPago(Long id) {
         Agendamento agendamento = agendamentoRepository.findById(id)
@@ -129,9 +111,6 @@ public class AgendamentoService {
         agendamentoRepository.save(agendamento);
     }
 
-    /**
-     * Finaliza o pagamento do agendamento, incluindo valor de cobrança adicional.
-     */
     @Transactional
     public void finalizarPagamento(Long id, FinalPaymentRequestDTO request) {
         Agendamento agendamento = agendamentoRepository.findById(id)
@@ -142,6 +121,8 @@ public class AgendamentoService {
         agendamentoRepository.save(agendamento);
     }
 
+    @Transactional(readOnly = true)
+    public String obterCodigoPixSinal(Long id) {
         Agendamento agendamento = agendamentoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Agendamento não encontrado com ID: " + id));
         return agendamento.getCodigoPixSinal();
@@ -151,23 +132,17 @@ public class AgendamentoService {
     public AgendamentoResponseDTO atualizar(Long id, AgendamentoRequestDTO dto) {
         Agendamento agendamento = agendamentoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Agendamento não encontrado com ID: " + id));
-
         Usuario cliente = usuarioRepository.findById(dto.getClienteId())
                 .orElseThrow(() -> new ResourceNotFoundException("Cliente não encontrado com ID: " + dto.getClienteId()));
-
         Usuario tatuador = usuarioRepository.findById(dto.getTatuadorId())
                 .orElseThrow(() -> new ResourceNotFoundException("Tatuador não encontrado com ID: " + dto.getTatuadorId()));
-
         if (!tatuador.isTatuador()) {
             throw new BusinessException("O usuário informado como tatuador não possui o perfil de TATUADOR.");
         }
-
         LocalDateTime inicio = dto.getDataHora();
         int duracao = (dto.getDuracaoMinutos() != null && dto.getDuracaoMinutos() > 0) ? dto.getDuracaoMinutos() : 60;
         LocalDateTime fim = inicio.plusMinutes(duracao);
-
         validarConflitos(tatuador.getId(), dto.getCabine(), inicio, fim, id);
-
         agendamento.setCliente(cliente);
         agendamento.setTatuador(tatuador);
         agendamento.setDataHora(inicio);
@@ -181,7 +156,6 @@ public class AgendamentoService {
             agendamento.setDescontoAplicado(desconto);
         }
         agendamento.setObservacoes(dto.getObservacoes());
-
         Agendamento atualizado = agendamentoRepository.save(agendamento);
         return AgendamentoResponseDTO.fromEntity(atualizado);
     }
@@ -190,20 +164,14 @@ public class AgendamentoService {
     public AgendamentoResponseDTO atualizarStatus(Long id, StatusAgendamento novoStatus, String motivo) {
         Agendamento agendamento = agendamentoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Agendamento não encontrado com ID: " + id));
-
         agendamento.setStatus(novoStatus);
-
         if (novoStatus == StatusAgendamento.CANCELADO && motivo != null && !motivo.trim().isEmpty()) {
             String obs = agendamento.getObservacoes() != null ? agendamento.getObservacoes() + "\n" : "";
             agendamento.setObservacoes(obs + "[Cancelado] Motivo: " + motivo);
         }
-
-        // Se o agendamento foi realizado com sucesso, gera a receita financeira com repasse
         if (novoStatus == StatusAgendamento.REALIZADO && agendamento.getValor() != null) {
             BigDecimal desconto = agendamento.getDescontoAplicado() != null ? agendamento.getDescontoAplicado() : BigDecimal.ZERO;
             BigDecimal valorLiquidoTotal = agendamento.getValor().subtract(desconto);
-
-            // Deduz o sinal que já foi recebido previamente para evitar duplicidade de receita
             BigDecimal valorSaldoRestante = valorLiquidoTotal;
             if (agendamento.isSinalPago() && agendamento.getValorSinal() != null) {
                 valorSaldoRestante = valorSaldoRestante.subtract(agendamento.getValorSinal());
@@ -211,7 +179,6 @@ public class AgendamentoService {
             if (valorSaldoRestante.compareTo(BigDecimal.ZERO) < 0) {
                 valorSaldoRestante = BigDecimal.ZERO;
             }
-
             TransacaoFinanceira transacao = TransacaoFinanceira.builder()
                     .descricao("Procedimento Concluído (Saldo) - Agendamento #" + agendamento.getId() + " (" + agendamento.getCliente().getNome() + ")")
                     .valor(valorSaldoRestante)
@@ -225,7 +192,6 @@ public class AgendamentoService {
             transacao.calcularRepasse();
             transacaoRepository.save(transacao);
         }
-
         Agendamento atualizado = agendamentoRepository.save(agendamento);
         return AgendamentoResponseDTO.fromEntity(atualizado);
     }
@@ -246,7 +212,6 @@ public class AgendamentoService {
     public List<AgendamentoResponseDTO> listar(Long tatuadorId, Long clienteId, StatusAgendamento status, LocalDate data) {
         LocalDateTime dataInicio = data != null ? data.atStartOfDay() : null;
         LocalDateTime dataFim = data != null ? data.atTime(LocalTime.MAX) : null;
-
         List<Agendamento> lista = agendamentoRepository.findComFiltros(tatuadorId, clienteId, status, dataInicio, dataFim);
         return lista.stream().map(AgendamentoResponseDTO::fromEntity).toList();
     }
@@ -263,7 +228,6 @@ public class AgendamentoService {
         if (agendamentoRepository.existeConflitoTatuador(tatuadorId, inicio, fim, id)) {
             throw new ConflictException("Conflito de agenda: o tatuador já possui agendamento confirmado neste intervalo.");
         }
-
         if (agendamentoRepository.existeConflitoCabine(cabine.trim(), inicio, fim, id)) {
             throw new ConflictException("Conflito de espaço: a cabine '" + cabine.trim() + "' já está ocupada neste intervalo.");
         }
@@ -273,14 +237,11 @@ public class AgendamentoService {
         if (codigoIndicacao == null || codigoIndicacao.trim().isEmpty() || valorBase == null) {
             return BigDecimal.ZERO;
         }
-
         Usuario indicador = usuarioRepository.findByCodigoIndicacao(codigoIndicacao.trim().toUpperCase())
                 .orElseThrow(() -> new BusinessException("Código de indicação inválido."));
-
         if (indicador.getId().equals(clienteId)) {
             throw new BusinessException("Não é permitido utilizar o próprio código de indicação.");
         }
-
         return valorBase.multiply(new BigDecimal("0.10")).setScale(2, RoundingMode.HALF_UP);
     }
 }
