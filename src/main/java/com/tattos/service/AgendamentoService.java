@@ -79,39 +79,15 @@ public class AgendamentoService {
         return AgendamentoResponseDTO.fromEntity(salvo);
     }
 
-    @Transactional
-    public AgendamentoResponseDTO confirmarPagamentoSinal(Long id) {
+    /**
+     * Retorna o código PIX Copia e Cola do sinal para o agendamento informado.
+     * Lança ResourceNotFoundException se o agendamento não existir.
+     */
+    @Transactional(readOnly = true)
+    public String obterCodigoPixSinal(Long id) {
         Agendamento agendamento = agendamentoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Agendamento não encontrado com ID: " + id));
-
-        // Idempotência: Se o sinal já estiver marcado como pago, retorna sem duplicar lançamento
-        if (agendamento.isSinalPago()) {
-            return AgendamentoResponseDTO.fromEntity(agendamento);
-        }
-
-        agendamento.setSinalPago(true);
-        if (agendamento.getStatus() == StatusAgendamento.AGENDADO) {
-            agendamento.setStatus(StatusAgendamento.CONFIRMADO);
-        }
-
-        // Gera a transação financeira de receita do sinal recebido via PIX
-        if (agendamento.getValorSinal() != null && agendamento.getValorSinal().compareTo(BigDecimal.ZERO) > 0) {
-            TransacaoFinanceira transacaoSinal = TransacaoFinanceira.builder()
-                    .descricao("Sinal Recebido (PIX) - Agendamento #" + agendamento.getId() + " (" + agendamento.getCliente().getNome() + ")")
-                    .valor(agendamento.getValorSinal())
-                    .tipo(TipoTransacao.RECEITA)
-                    .data(LocalDate.now())
-                    .tatuador(agendamento.getTatuador())
-                    .agendamento(agendamento)
-                    .categoria("Sinal Reserva")
-                    .formaPagamento("PIX")
-                    .build();
-            transacaoSinal.calcularRepasse();
-            transacaoRepository.save(transacaoSinal);
-        }
-
-        Agendamento salvo = agendamentoRepository.save(agendamento);
-        return AgendamentoResponseDTO.fromEntity(salvo);
+        return agendamento.getCodigoPixSinal();
     }
 
     @Transactional

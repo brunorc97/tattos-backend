@@ -58,6 +58,10 @@ public class InsumoService {
             codigo = "INS-" + java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase();
         }
 
+        // Validação da data de validade: não pode ser data passada
+        if (dto.getDataValidade() != null && dto.getDataValidade().isBefore(java.time.LocalDate.now())) {
+            throw new BusinessException("Não é permitido cadastrar insumo com data de validade passada.");
+        }
         Insumo insumo = Insumo.builder()
                 .codigo(codigo)
                 .nome(dto.getNome().trim())

@@ -9,8 +9,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class EmailService {
 
-    public void sendEmail(String to, String subject, String body) {
-        // Placeholder: em produção use JavaMailSender ou outra lib.
-        System.out.println("[EmailService] Enviando e‑mail para " + to + " | Assunto: " + subject + "\n" + body);
+    public void logAssinaturaEnviada(Long fichaId) {
+        // Simple log indicating that a signature email was sent (placeholder)
+        System.out.println("[EmailService] Assinatura digital de ficha ID " + fichaId + " enviada por e‑mail.");
     }
 }
