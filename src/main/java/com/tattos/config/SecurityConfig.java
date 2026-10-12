@@ -64,7 +64,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/agendamentos/**", "/api/appointments/**", "/api/sessions/**").hasAnyRole("GESTOR", "TATUADOR", "CLIENTE")
 
                 // Todas as outras rotas exigem autenticação
-                .anyRequest().authenticated()
+                .requestMatchers("/api/google-calendar/**").permitAll()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

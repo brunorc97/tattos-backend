@@ -29,9 +29,7 @@ public class RouteAuditor implements CommandLineRunner {
         
         mapping.getHandlerMethods().forEach((requestMappingInfo, handlerMethod) -> {
             // Imprime o padrão exato da URL (ex: [/api/v1/users] ou [/**])
-            var patterns = requestMappingInfo.getPathPatternsCondition() != null ? 
-                           requestMappingInfo.getPathPatternsCondition().getPatternValues() : 
-                           requestMappingInfo.getPatternsCondition().getPatternValues();
+            var patterns = requestMappingInfo.getPatternValues();
             
             System.out.printf("Rota: %s -> Método: %s.%s()%n", 
                 patterns, 

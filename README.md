@@ -532,7 +532,8 @@ Funcionalidades planejadas para futuras versões:
 * Monitoramento com Prometheus e Grafana;
 * Deploy em ambiente cloud;
 * Orquestração com Kubernetes;
-* Suporte multiestúdio / multi-tenant.
+* Suporte multiestúdio / multi-tenant;
+* Integração com WhatsApp (planejada para futuro).
 
 ⸻
 
@@ -557,3 +558,39 @@ O projeto utiliza conhecimentos relacionados às seguintes áreas:
 
 Tecnologias principais:
 Java • Spring Boot • Spring Security • JWT • JPA • Hibernate • MySQL • Flyway • Docker • Gradle • GitHub Actions
+
+## Aftercare CRM Panel
+
+The **Aftercare** module adds a new resource to manage post‑procedure follow‑up for clients.
+
+### Endpoints
+| Method | URL | Description |
+|--------|-----|-------------|
+| `POST` | `/api/aftercare` | Create a new after‑care record. Requires `clienteId` and `agendamentoId` as request parameters, optional `notes`.
+| `GET` | `/api/aftercare/{id}` | Retrieve a specific after‑care record.
+| `GET` | `/api/aftercare/cliente/{clienteId}` | List all after‑care records for a given client.
+| `PUT` | `/api/aftercare/{id}` | Update notes for an after‑care record.
+| `DELETE` | `/api/aftercare/{id}` | Delete an after‑care record.
+
+### Automatic Healing Progress
+A daily scheduled job (`AftercareSchedulerService`) updates the `healingProgress` field based on the number of days elapsed since the procedure (30 days → 100 %).
+
+### Front‑end
+A new React page `src/pages/Aftercare.jsx` (not included in this backend repo) can consume these endpoints to display:
+- Procedure date
+- Days since procedure
+- Healing percentage bar
+- Notes and edit capabilities
+
+### Future work
+- Email reminders via `EmailService`
+- WhatsApp integration (planned)
+
+---
+
+## New Feature: Budget (Orçamento)
+
+- Added Flyway migrations V9 and V10 for `orcamentos`, `projetos`, and `kanban_cards` tables.
+- Implemented backend entities, repositories, DTOs, services, and REST controllers for Orcamento, Projeto, and KanbanCard.
+- Added React pages and components: `Orcamento.jsx`, `KanbanBoard.jsx`, and `ProjectApprovalModal.jsx`.
+- Updated API documentation to include new endpoints.
