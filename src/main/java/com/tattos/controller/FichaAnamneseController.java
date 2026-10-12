@@ -85,11 +85,12 @@ public class FichaAnamneseController {
         ));
     }
 
-    @Operation(summary = "Registrar ficha de anamnese")
-    @ApiResponse(responseCode = "201", description = "Ficha registrada com sucesso")
-    @PostMapping
+    @Operation(summary = "Assinar termo de consentimento", description = "O cliente confirma a assinatura digital (flag) e registra o e‑mail para auditoria.")
+    @ApiResponse(responseCode = "204", description = "Assinatura registrada com sucesso")
+    @PostMapping("/{id}/assinatura")
     @PreAuthorize("hasAnyRole('GESTOR','TATUADOR','CLIENTE')")
-    public ResponseEntity<FichaAnamneseResponseDTO> registrar(@Valid @RequestBody FichaAnamneseRequestDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(fichaService.registrarFicha(dto));
+    public ResponseEntity<Void> assinarTermo(@PathVariable Long id, @Valid @RequestBody AssinaturaRequestDTO dto) {
+        fichaService.assinarTermo(id, dto);
+        return ResponseEntity.noContent().build();
     }
 }

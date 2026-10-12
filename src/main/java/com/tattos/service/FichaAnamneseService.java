@@ -9,7 +9,8 @@ import com.tattos.model.FichaAnamnese;
 import com.tattos.model.Usuario;
 import com.tattos.repository.AgendamentoRepository;
 import com.tattos.repository.FichaAnamneseRepository;
-import com.tattos.repository.UsuarioRepository;
+import com.tattos.dto.request.AssinaturaRequestDTO;
+import com.tattos.model.AssinaturaLog;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,9 +25,30 @@ public class FichaAnamneseService {
     private final FichaAnamneseRepository fichaRepository;
     private final UsuarioRepository usuarioRepository;
     private final AgendamentoRepository agendamentoRepository;
+    private final AssinaturaLogRepository assinaturaLogRepository;
+    private final EmailService emailService;
 
     @Transactional
-    public FichaAnamneseResponseDTO registrarFicha(FichaAnamneseRequestDTO dto) {
+    public void assinarTermo(Long fichaId, AssinaturaRequestDTO dto) {
+        // Load ficha
+        FichaAnamnese ficha = fichaRepository.findById(fichaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ficha de anamnese não encontrada com ID: " + fichaId));
+        // Mark term as signed
+        ficha.setTermoAssinado(true);
+        // Persist change
+        fichaRepository.save(ficha);
+        // Create log entry
+        AssinaturaLog log = AssinaturaLog.builder()
+                .fichaAnamnese(ficha)
+                .dataAssinatura(LocalDateTime.now())
+                .email(dto.getEmail())
+                .usuario(dto.getUsuarioId() != null ? usuarioRepository.findById(dto.getUsuarioId()).orElse(null) : null)
+                .build();
+        assinaturaLogRepository.save(log);
+        // Placeholder email log
+        emailService.logAssinaturaEnviada(fichaId);
+    }
+
         Usuario cliente = usuarioRepository.findById(dto.getClienteId())
                 .orElseThrow(() -> new ResourceNotFoundException("Cliente não encontrado com ID: " + dto.getClienteId()));
 
