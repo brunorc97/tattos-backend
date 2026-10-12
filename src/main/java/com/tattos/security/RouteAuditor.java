@@ -25,7 +25,9 @@ public class RouteAuditor implements CommandLineRunner {
     @Override
     public void run(String... args) {
         System.out.println("=== VARREDURA DE SEGURANÇA: ENDPOINTS REGISTRADOS ===");
-        RequestMappingHandlerMapping mapping = context.getBean(RequestMappingHandlerMapping.class);
+        // Usa o nome do bean principal do WebMvc, pois o Actuator registra outro
+        // RequestMappingHandlerMapping (controllerEndpointHandlerMapping).
+        RequestMappingHandlerMapping mapping = context.getBean("requestMappingHandlerMapping", RequestMappingHandlerMapping.class);
         
         mapping.getHandlerMethods().forEach((requestMappingInfo, handlerMethod) -> {
             // Imprime o padrão exato da URL (ex: [/api/v1/users] ou [/**])

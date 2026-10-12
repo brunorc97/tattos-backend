@@ -16,10 +16,10 @@ import java.util.Collections;
 @Configuration
 public class GoogleOAuthConfig {
 
-    @Value("${google.client.id}")
+    @Value("${google.client.id:}")
     private String clientId;
 
-    @Value("${google.client.secret}")
+    @Value("${google.client.secret:}")
     private String clientSecret;
 
     @Bean
