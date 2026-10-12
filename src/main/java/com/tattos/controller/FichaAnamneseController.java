@@ -2,7 +2,7 @@ package com.tattos.controller;
 
 import com.tattos.dto.request.FichaAnamneseRequestDTO;
 import com.tattos.dto.response.FichaAnamneseResponseDTO;
-import com.tattos.service.FichaAnamneseService;
+import com.tattos.dto.request.AssinaturaRequestDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;

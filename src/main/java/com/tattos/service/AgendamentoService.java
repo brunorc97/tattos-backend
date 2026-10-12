@@ -1,6 +1,8 @@
 package com.tattos.service;
 
-import com.tattos.dto.request.AgendamentoRequestDTO;
+import com.tattos.dto.request.PixSinalRequestDTO;
+import com.tattos.dto.request.FinalPaymentRequestDTO;
+import com.tattos.dto.response.PixSinalResponseDTO;
 import com.tattos.dto.response.AgendamentoResponseDTO;
 import com.tattos.exception.BusinessException;
 import com.tattos.exception.ConflictException;
@@ -53,9 +55,8 @@ public class AgendamentoService {
 
         BigDecimal desconto = calcularDescontoIndicacao(dto.getCodigoIndicacao(), cliente.getId(), dto.getValor());
 
-        BigDecimal sinal = (dto.getValorSinal() != null && dto.getValorSinal().compareTo(BigDecimal.ZERO) > 0)
-                ? dto.getValorSinal()
-                : (dto.getValor() != null ? dto.getValor().multiply(new BigDecimal("0.20")).setScale(2, RoundingMode.HALF_UP) : BigDecimal.ZERO);
+        // Valor do sinal será definido ao gerar o PIX via endpoint específico
+        BigDecimal sinal = BigDecimal.ZERO;
 
         String pixCopiaECola = "00020126580014BR.GOV.BCB.PIX0136tattos-pix-sinal-" + UUID.randomUUID().toString().substring(0, 8) + "5204000053039865802BR5910TATTOS ERP6009SAO PAULO62070503***6304";
 
@@ -83,8 +84,64 @@ public class AgendamentoService {
      * Retorna o código PIX Copia e Cola do sinal para o agendamento informado.
      * Lança ResourceNotFoundException se o agendamento não existir.
      */
-    @Transactional(readOnly = true)
-    public String obterCodigoPixSinal(Long id) {
+    /**
+     * Gera o código PIX do sinal com base no percentual informado.
+     * O percentual deve estar entre 10 e 50.
+     */
+    @Transactional
+    public PixSinalResponseDTO gerarPixSinal(Long id, PixSinalRequestDTO request) {
+        if (request.getPercentual() == null) {
+            throw new BusinessException("Percentual do sinal é obrigatório.");
+        }
+        int perc = request.getPercentual();
+        if (perc < 10 || perc > 50) {
+            throw new BusinessException("Percentual do sinal deve estar entre 10 e 50.");
+        }
+        Agendamento agendamento = agendamentoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Agendamento não encontrado com ID: " + id));
+        if (agendamento.getValor() == null) {
+            throw new BusinessException("Agendamento não possui valor definido para cálculo do sinal.");
+        }
+        BigDecimal valorSinal = agendamento.getValor()
+                .multiply(new BigDecimal(perc).divide(new BigDecimal(100)))
+                .setScale(2, RoundingMode.HALF_UP);
+        // Gerar código PIX placeholder (não está integrado a serviço externo)
+        String pix = "00020126580014BR.GOV.BCB.PIX0136tattos-pix-sinal-" + UUID.randomUUID().toString().substring(0, 8)
+                + "5204000053039865802BR5910TATTOS ERP6009SAO PAULO62070503***6304";
+        agendamento.setValorSinal(valorSinal);
+        agendamento.setCodigoPixSinal(pix);
+        agendamentoRepository.save(agendamento);
+        return PixSinalResponseDTO.builder()
+                .codigoPix(pix)
+                .valorSinal(valorSinal)
+                .build();
+    }
+
+    /**
+     * Marca o sinal como pago e registra a data de pagamento.
+     */
+    @Transactional
+    public void marcarSinalPago(Long id) {
+        Agendamento agendamento = agendamentoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Agendamento não encontrado com ID: " + id));
+        agendamento.setSinalPago(true);
+        agendamento.setDataPagamento(LocalDateTime.now());
+        agendamentoRepository.save(agendamento);
+    }
+
+    /**
+     * Finaliza o pagamento do agendamento, incluindo valor de cobrança adicional.
+     */
+    @Transactional
+    public void finalizarPagamento(Long id, FinalPaymentRequestDTO request) {
+        Agendamento agendamento = agendamentoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Agendamento não encontrado com ID: " + id));
+        agendamento.setValorCobrancaAdicional(request.getValorCobrancaAdicional());
+        agendamento.setPagamentoCompleto(true);
+        agendamento.setDataPagamento(LocalDateTime.now());
+        agendamentoRepository.save(agendamento);
+    }
+
         Agendamento agendamento = agendamentoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Agendamento não encontrado com ID: " + id));
         return agendamento.getCodigoPixSinal();

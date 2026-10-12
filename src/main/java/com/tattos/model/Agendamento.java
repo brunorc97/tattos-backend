@@ -65,6 +65,17 @@ public class Agendamento {
     @Column(name = "sinal_pago", nullable = false)
     private boolean sinalPago = false;
 
+    @Builder.Default
+    @Column(name = "valor_cobranca_adicional", nullable = false, precision = 10, scale = 2)
+    private BigDecimal valorCobrancaAdicional = BigDecimal.ZERO;
+
+    @Builder.Default
+    @Column(name = "pagamento_completo", nullable = false)
+    private boolean pagamentoCompleto = false;
+
+    @Column(name = "data_pagamento")
+    private LocalDateTime dataPagamento;
+
     @Column(name = "codigo_pix_sinal")
     private String codigoPixSinal;
 

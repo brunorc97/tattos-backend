@@ -29,6 +29,9 @@ public class AgendamentoResponseDTO {
     private BigDecimal descontoAplicado;
     private BigDecimal valorFinal;
     private String observacoes;
+    private BigDecimal valorCobrancaAdicional;
+    private boolean pagamentoCompleto;
+    private LocalDateTime dataPagamento;
 
     private Long clienteId;
     private String clienteNome;
@@ -63,7 +66,9 @@ public class AgendamentoResponseDTO {
                 .descontoAplicado(desconto)
                 .valorFinal(valorFinal)
                 .observacoes(a.getObservacoes())
-                .clienteId(a.getCliente() != null ? a.getCliente().getId() : null)
+                .valorCobrancaAdicional(a.getValorCobrancaAdicional())
+                .pagamentoCompleto(a.isPagamentoCompleto())
+                .dataPagamento(a.getDataPagamento())
                 .clienteNome(a.getCliente() != null ? a.getCliente().getNome() : null)
                 .clienteTelefone(a.getCliente() != null ? a.getCliente().getTelefone() : null)
                 .clienteEmail(a.getCliente() != null ? a.getCliente().getEmail() : null)

@@ -3,6 +3,9 @@ package com.tattos.controller;
 import com.tattos.dto.request.AgendamentoRequestDTO;
 import com.tattos.dto.request.StatusAgendamentoDTO;
 import com.tattos.dto.response.AgendamentoResponseDTO;
+import com.tattos.dto.request.PixSinalRequestDTO;
+import com.tattos.dto.response.PixSinalResponseDTO;
+import com.tattos.dto.request.FinalPaymentRequestDTO;
 import com.tattos.model.enums.StatusAgendamento;
 import com.tattos.service.AgendamentoService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -82,13 +85,31 @@ public class AgendamentoController {
         return ResponseEntity.ok(agendamentoService.atualizarStatus(id, dto.getStatus(), dto.getMotivoCancelamento()));
     }
 
-    @Operation(summary = "Obter código PIX do sinal", description = "Retorna o código PIX Copia e Cola para pagamento do sinal do agendamento")
-    @ApiResponse(responseCode = "200", description = "Código PIX retornado")
-    @GetMapping("/{id}/pix")
+    @Operation(summary = "Gerar PIX do sinal com percentual")
+    @ApiResponse(responseCode = "200", description = "PIX gerado com sucesso")
+    @PostMapping("/{id}/pix")
     @PreAuthorize("hasAnyRole('GESTOR','TATUADOR','CLIENTE')")
-    public ResponseEntity<String> obterCodigoPix(@PathVariable Long id) {
-        String pix = agendamentoService.obterCodigoPixSinal(id);
-        return ResponseEntity.ok(pix);
+    public ResponseEntity<PixSinalResponseDTO> gerarPix(@PathVariable Long id, @Valid @RequestBody PixSinalRequestDTO request) {
+        PixSinalResponseDTO response = agendamentoService.gerarPixSinal(id, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "Marcar sinal como pago")
+    @ApiResponse(responseCode = "200", description = "Sinal marcado como pago")
+    @PatchMapping("/{id}/sinal-pago")
+    @PreAuthorize("hasAnyRole('GESTOR','TATUADOR','CLIENTE')")
+    public ResponseEntity<Void> marcarSinalPago(@PathVariable Long id) {
+        agendamentoService.marcarSinalPago(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "Finalizar pagamento com cobrança adicional")
+    @ApiResponse(responseCode = "200", description = "Pagamento finalizado")
+    @PatchMapping("/{id}/finalizar-pagamento")
+    @PreAuthorize("hasAnyRole('GESTOR','TATUADOR','CLIENTE')")
+    public ResponseEntity<Void> finalizarPagamento(@PathVariable Long id, @Valid @RequestBody FinalPaymentRequestDTO request) {
+        agendamentoService.finalizarPagamento(id, request);
+        return ResponseEntity.ok().build();
     }
 
     @Operation(summary = "Deletar agendamento")
