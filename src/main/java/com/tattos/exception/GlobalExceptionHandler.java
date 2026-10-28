@@ -15,12 +15,16 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     private final MessageSource messageSource;
 
@@ -34,13 +38,25 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponseDTO> handleDataIntegrity(DataIntegrityViolationException ex, HttpServletRequest request) {
+        log.warn("Violação de integridade de dados em {}: {}", request.getRequestURI(), ex.getMessage());
+
+        String detalhe = ex.getMessage() != null ? ex.getMessage().toLowerCase() : "";
+        boolean chaveDuplicada = detalhe.contains("duplicate entry") || detalhe.contains("duplicate key");
+        boolean violacaoFk = detalhe.contains("foreign key") || detalhe.contains("cannot delete or update a parent row")
+                || detalhe.contains("referential integrity");
+
+        HttpStatus status = violacaoFk ? HttpStatus.UNPROCESSABLE_ENTITY : HttpStatus.CONFLICT;
+        String mensagem = chaveDuplicada ? msg("error.duplicate")
+                : violacaoFk ? msg("error.foreign_key")
+                : msg("error.data.integrity");
+
         ErrorResponseDTO error = ErrorResponseDTO.of(
-            HttpStatus.CONFLICT.value(),
+            status.value(),
             "Conflito de Integridade de Dados",
-            msg("error.data.integrity"),
+            mensagem,
             request.getRequestURI()
         );
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+        return ResponseEntity.status(status).body(error);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
