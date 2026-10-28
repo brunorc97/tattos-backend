@@ -21,6 +21,12 @@ public interface AgendamentoRepository extends JpaRepository<Agendamento, Long> 
 
     List<Agendamento> findByStatus(StatusAgendamento status);
 
+    long countByStatus(StatusAgendamento status);
+
+    long countBySinalPagoTrue();
+
+    long countByValorSinalGreaterThan(java.math.BigDecimal valor);
+
     List<Agendamento> findByDataHoraBetween(LocalDateTime inicio, LocalDateTime fim);
 
     @Query("SELECT a FROM Agendamento a WHERE a.status IN :statusList " +

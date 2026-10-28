@@ -43,6 +43,7 @@ dependencies {
 	implementation 'com.google.http-client:google-http-client-jackson2:1.44.2'
 	implementation 'com.google.apis:google-api-services-calendar:v3-rev20260925-2.0.0'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
 
 	// MySQL
 	runtimeOnly 'com.mysql:mysql-connector-j'

@@ -18,3 +18,9 @@ app:
   security:
     jwt-secret: minha-chave-secreta-super-segura-para-jwt-tattos-2026-com-no-minimo-32-caracteres
     jwt-expiration: 86400000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
