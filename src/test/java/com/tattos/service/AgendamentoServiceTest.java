@@ -25,8 +25,15 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @ActiveProfiles("test")
-@Transactional
 class AgendamentoServiceTest {
+
+    @org.junit.jupiter.api.AfterEach
+    void tearDown() {
+        transacaoRepository.deleteAll();
+        agendamentoRepository.deleteAll();
+        usuarioRepository.deleteAll();
+    }
+
 
     @Autowired
     private AgendamentoService agendamentoService;

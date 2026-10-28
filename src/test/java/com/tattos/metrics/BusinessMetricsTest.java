@@ -31,6 +31,13 @@ import static org.hamcrest.Matchers.containsString;
 @ActiveProfiles("test")
 class BusinessMetricsTest {
 
+    @org.junit.jupiter.api.AfterEach
+    void tearDown() {
+        agendamentoRepository.deleteAll();
+        usuarioRepository.deleteAll();
+    }
+
+
     @Autowired
     private MockMvc mockMvc;
 
