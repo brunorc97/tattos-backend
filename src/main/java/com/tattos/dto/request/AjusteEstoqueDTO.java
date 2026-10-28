@@ -13,8 +13,8 @@ import lombok.NoArgsConstructor;
 @Builder
 public class AjusteEstoqueDTO {
 
-    @NotNull(message = "A quantidade é obrigatória")
-    @Min(value = 1, message = "A quantidade deve ser de no mínimo 1")
+    @NotNull(message = "{validation.quantidade.required}")
+    @Min(value = 1, message = "{validation.quantidade.min}")
     private Integer quantidade;
 
     private String motivo;

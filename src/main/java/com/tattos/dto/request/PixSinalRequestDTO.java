@@ -18,8 +18,8 @@ import lombok.NoArgsConstructor;
 @Builder
 public class PixSinalRequestDTO {
 
-    @NotNull(message = "O percentual do sinal é obrigatório")
-    @Min(value = 10, message = "O percentual mínimo permitido é 10")
-    @Max(value = 50, message = "O percentual máximo permitido é 50")
+    @NotNull(message = "{validation.sinal.percentual.required}")
+    @Min(value = 10, message = "{validation.sinal.percentual.min}")
+    @Max(value = 50, message = "{validation.sinal.percentual.max}")
     private Integer percentual;
 }

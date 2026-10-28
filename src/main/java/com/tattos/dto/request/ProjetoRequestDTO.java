@@ -13,8 +13,8 @@ import lombok.NoArgsConstructor;
 @Builder
 public class ProjetoRequestDTO {
 
-    @NotBlank(message = "O nome do projeto é obrigatório")
-    @Size(min = 2, max = 255, message = "O nome do projeto deve ter entre 2 e 255 caracteres")
+    @NotBlank(message = "{validation.projeto.nome.required}")
+    @Size(min = 2, max = 255, message = "{validation.projeto.nome.size}")
     private String nome;
 
     private String descricao;

@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class FichaAnamneseRequestDTO {
 
-    @NotNull(message = "O ID do cliente é obrigatório")
+    @NotNull(message = "{validation.cliente.id.required}")
     private Long clienteId;
 
     private Long agendamentoId;

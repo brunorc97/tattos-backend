@@ -14,17 +14,17 @@ import lombok.NoArgsConstructor;
 @Builder
 public class KanbanCardRequestDTO {
 
-    @NotBlank(message = "O título do card é obrigatório")
-    @Size(max = 255, message = "O título deve ter no máximo 255 caracteres")
+    @NotBlank(message = "{validation.kanban.titulo.required}")
+    @Size(max = 255, message = "{validation.kanban.titulo.size}")
     private String titulo;
 
     private String descricao;
 
-    @NotBlank(message = "O status do card é obrigatório")
-    @Size(max = 50, message = "O status deve ter no máximo 50 caracteres")
+    @NotBlank(message = "{validation.kanban.status.required}")
+    @Size(max = 50, message = "{validation.kanban.status.size}")
     private String status;
 
-    @NotNull(message = "A ordem do card é obrigatória")
+    @NotNull(message = "{validation.kanban.ordem.required}")
     private Integer ordem;
 
     private Long orcamentoId;

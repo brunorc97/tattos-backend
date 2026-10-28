@@ -17,12 +17,12 @@ import java.math.BigDecimal;
 @Builder
 public class OrcamentoRequestDTO {
 
-    @NotBlank(message = "O nome do orçamento é obrigatório")
-    @Size(min = 2, max = 255, message = "O nome do orçamento deve ter entre 2 e 255 caracteres")
+    @NotBlank(message = "{validation.orcamento.nome.required}")
+    @Size(min = 2, max = 255, message = "{validation.orcamento.nome.size}")
     private String nome;
 
-    @NotNull(message = "O valor do orçamento é obrigatório")
-    @DecimalMin(value = "0.01", message = "O valor do orçamento deve ser maior que zero")
+    @NotNull(message = "{validation.valor.required}")
+    @DecimalMin(value = "0.01", message = "{validation.positive}")
     private BigDecimal valor;
 
     private Long projetoId;

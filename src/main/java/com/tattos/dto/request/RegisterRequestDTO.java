@@ -20,8 +20,8 @@ public class RegisterRequestDTO {
     private String nome;
     private String name;
 
-    @NotBlank(message = "O email é obrigatório")
-    @Email(message = "Email com formato inválido")
+    @NotBlank(message = "{validation.email.required}")
+    @Email(message = "{validation.email.invalid}")
     private String email;
 
     private String senha;

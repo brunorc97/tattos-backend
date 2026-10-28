@@ -3,6 +3,8 @@ package com.tattos.exception;
 import com.tattos.dto.response.ErrorResponseDTO;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,13 +22,22 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private final MessageSource messageSource;
+
+    public GlobalExceptionHandler(MessageSource messageSource) {
+        this.messageSource = messageSource;
+    }
+
+    private String msg(String key) {
+        return messageSource.getMessage(key, null, LocaleContextHolder.getLocale());
+    }
+
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponseDTO> handleDataIntegrity(DataIntegrityViolationException ex, HttpServletRequest request) {
-        String mensagem = "Operação rejeitada devido a conflito de integridade de dados (registro duplicado ou chave estrangeira em uso).";
         ErrorResponseDTO error = ErrorResponseDTO.of(
             HttpStatus.CONFLICT.value(),
             "Conflito de Integridade de Dados",
-            mensagem,
+            msg("error.data.integrity"),
             request.getRequestURI()
         );
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
@@ -41,7 +52,7 @@ public class GlobalExceptionHandler {
         ErrorResponseDTO error = ErrorResponseDTO.of(
             HttpStatus.BAD_REQUEST.value(),
             "Parâmetro Inválido",
-            "Um ou mais parâmetros informados violam as restrições definidas.",
+            msg("error.constraint.violation"),
             request.getRequestURI(),
             errors
         );
@@ -75,7 +86,7 @@ public class GlobalExceptionHandler {
         ErrorResponseDTO error = ErrorResponseDTO.of(
             HttpStatus.NOT_FOUND.value(),
             "Recurso Não Encontrado",
-            ex.getMessage(),
+            msg("error.not_found"),
             request.getRequestURI()
         );
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
@@ -91,7 +102,7 @@ public class GlobalExceptionHandler {
         ErrorResponseDTO error = ErrorResponseDTO.of(
             HttpStatus.BAD_REQUEST.value(),
             "Erro de Validação de Dados",
-            "Um ou mais campos contêm valores inválidos.",
+            msg("error.validation"),
             request.getRequestURI(),
             fieldErrors
         );
@@ -103,7 +114,7 @@ public class GlobalExceptionHandler {
         ErrorResponseDTO error = ErrorResponseDTO.of(
             HttpStatus.UNAUTHORIZED.value(),
             "Falha de Autenticação",
-            "Credenciais inválidas ou token expirado.",
+            msg("error.unauthorized"),
             request.getRequestURI()
         );
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
@@ -114,7 +125,7 @@ public class GlobalExceptionHandler {
         ErrorResponseDTO error = ErrorResponseDTO.of(
             HttpStatus.FORBIDDEN.value(),
             "Acesso Negado",
-            "Você não possui permissão para acessar este recurso.",
+            msg("error.forbidden"),
             request.getRequestURI()
         );
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
@@ -125,7 +136,7 @@ public class GlobalExceptionHandler {
         ErrorResponseDTO error = ErrorResponseDTO.of(
             HttpStatus.INTERNAL_SERVER_ERROR.value(),
             "Erro Interno do Servidor",
-            ex.getMessage() != null ? ex.getMessage() : "Ocorreu um erro inesperado.",
+            msg("error.internal"),
             request.getRequestURI()
         );
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);

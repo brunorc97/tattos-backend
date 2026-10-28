@@ -18,24 +18,24 @@ import java.time.LocalDateTime;
 @Builder
 public class AgendamentoRequestDTO {
 
-    @NotNull(message = "O ID do cliente é obrigatório")
+    @NotNull(message = "{validation.cliente.id.required}")
     private Long clienteId;
 
-    @NotNull(message = "O ID do tatuador é obrigatório")
+    @NotNull(message = "{validation.tatuador.id.required}")
     private Long tatuadorId;
 
-    @NotNull(message = "A data e horário do agendamento são obrigatórios")
-    @FutureOrPresent(message = "A data e hora do agendamento não podem ser no passado")
+    @NotNull(message = "{validation.agendamento.data.required}")
+    @FutureOrPresent(message = "{validation.future}")
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm[:ss]")
     private LocalDateTime dataHora;
 
     @Builder.Default
     private Integer duracaoMinutos = 60;
 
-    @NotBlank(message = "A cabine é obrigatória")
+    @NotBlank(message = "{validation.cabine.required}")
     private String cabine;
 
-    @NotNull(message = "O valor do procedimento é obrigatório")
+    @NotNull(message = "{validation.procedimento.valor.required}")
     private BigDecimal valor;
 
     @Builder.Default

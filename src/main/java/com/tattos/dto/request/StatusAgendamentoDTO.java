@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class StatusAgendamentoDTO {
 
-    @NotNull(message = "O novo status é obrigatório")
+    @NotNull(message = "{validation.status.required}")
     private StatusAgendamento status;
 
     private String motivoCancelamento;

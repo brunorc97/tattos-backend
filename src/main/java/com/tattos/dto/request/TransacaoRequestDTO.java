@@ -19,17 +19,17 @@ import java.time.LocalDate;
 @Builder
 public class TransacaoRequestDTO {
 
-    @NotBlank(message = "A descrição é obrigatória")
+    @NotBlank(message = "{validation.descricao.required}")
     private String descricao;
 
-    @NotNull(message = "O valor é obrigatório")
-    @DecimalMin(value = "0.01", message = "O valor deve ser maior que zero")
+    @NotNull(message = "{validation.valor.required}")
+    @DecimalMin(value = "0.01", message = "{validation.positive}")
     private BigDecimal valor;
 
-    @NotNull(message = "O tipo da transação é obrigatório")
+    @NotNull(message = "{validation.transacao.tipo.required}")
     private TipoTransacao tipo;
 
-    @NotNull(message = "A data é obrigatória")
+    @NotNull(message = "{validation.data.required}")
     private LocalDate data;
 
     @Builder.Default

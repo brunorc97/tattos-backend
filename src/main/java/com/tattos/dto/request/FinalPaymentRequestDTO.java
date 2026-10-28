@@ -17,7 +17,7 @@ import java.math.BigDecimal;
 @Builder
 public class FinalPaymentRequestDTO {
 
-    @NotNull(message = "O valor da cobrança adicional é obrigatório")
-    @DecimalMin(value = "0.0", inclusive = true, message = "O valor não pode ser negativo")
+    @NotNull(message = "{validation.pagamento.valor.required}")
+    @DecimalMin(value = "0.0", inclusive = true, message = "{validation.valor.nonnegative}")
     private BigDecimal valorCobrancaAdicional;
 }

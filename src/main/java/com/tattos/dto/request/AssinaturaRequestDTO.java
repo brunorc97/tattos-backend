@@ -15,8 +15,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AssinaturaRequestDTO {
 
-    @NotBlank(message = "E‑mail do cliente é obrigatório")
-    @Email(message = "Formato de e‑mail inválido")
+    @NotBlank(message = "{validation.email.required}")
+    @Email(message = "{validation.email.invalid}")
     private String email;
 
     // Opcional: id do usuário que realizou a ação (pode ser o cliente ou gestor)

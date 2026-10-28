@@ -19,15 +19,15 @@ public class InsumoRequestDTO {
 
     private String codigo;
 
-    @NotBlank(message = "O nome do insumo é obrigatório")
+    @NotBlank(message = "{validation.insumo.nome.required}")
     private String nome;
 
-    @NotNull(message = "A quantidade inicial é obrigatória")
-    @Min(value = 0, message = "A quantidade inicial não pode ser negativa")
+    @NotNull(message = "{validation.quantidade.required}")
+    @Min(value = 0, message = "{validation.quantidade.nonnegative}")
     private Integer quantidadeAtual;
 
-    @NotNull(message = "O nível crítico é obrigatório")
-    @Min(value = 0, message = "O nível crítico não pode ser negativo")
+    @NotNull(message = "{validation.nivel.critico.required}")
+    @Min(value = 0, message = "{validation.nivel.critico.nonnegative}")
     private Integer nivelCritico;
 
     @Builder.Default
