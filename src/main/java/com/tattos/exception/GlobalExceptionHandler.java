@@ -2,6 +2,8 @@ package com.tattos.exception;
 
 import com.tattos.dto.response.ErrorResponseDTO;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -17,6 +19,34 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponseDTO> handleDataIntegrity(DataIntegrityViolationException ex, HttpServletRequest request) {
+        String mensagem = "Operação rejeitada devido a conflito de integridade de dados (registro duplicado ou chave estrangeira em uso).";
+        ErrorResponseDTO error = ErrorResponseDTO.of(
+            HttpStatus.CONFLICT.value(),
+            "Conflito de Integridade de Dados",
+            mensagem,
+            request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponseDTO> handleConstraintViolation(ConstraintViolationException ex, HttpServletRequest request) {
+        Map<String, String> errors = new HashMap<>();
+        ex.getConstraintViolations().forEach(violation ->
+            errors.put(violation.getPropertyPath().toString(), violation.getMessage())
+        );
+        ErrorResponseDTO error = ErrorResponseDTO.of(
+            HttpStatus.BAD_REQUEST.value(),
+            "Parâmetro Inválido",
+            "Um ou mais parâmetros informados violam as restrições definidas.",
+            request.getRequestURI(),
+            errors
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
 
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<ErrorResponseDTO> handleConflict(ConflictException ex, HttpServletRequest request) {

@@ -4,7 +4,9 @@ import com.tattos.dto.request.KanbanCardRequestDTO;
 import com.tattos.dto.response.KanbanCardResponseDTO;
 import com.tattos.service.KanbanCardService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @Tag(name = "Kanban", description = "Kanban board for budgets and projects")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping({"/api/kanban", "/api/kanban-cards"})
 @RequiredArgsConstructor
@@ -31,7 +34,7 @@ public class KanbanCardController {
     @Operation(summary = "Criar cartão Kanban")
     @PostMapping
     @PreAuthorize("hasAnyRole('GESTOR','TATUADOR')")
-    public ResponseEntity<KanbanCardResponseDTO> criar(@RequestBody KanbanCardRequestDTO dto) {
+    public ResponseEntity<KanbanCardResponseDTO> criar(@Valid @RequestBody KanbanCardRequestDTO dto) {
         KanbanCardResponseDTO created = kanbanCardService.criarKanbanCard(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }

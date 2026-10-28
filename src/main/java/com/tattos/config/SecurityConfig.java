@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -15,6 +16,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -36,6 +38,9 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .exceptionHandling(exceptions -> exceptions
+                .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
+            )
             .headers(headers -> headers
                 .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'"))
                 .frameOptions(frame -> frame.deny())
@@ -49,13 +54,15 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/error").permitAll()
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                .requestMatchers("/actuator/**").permitAll()
+                .requestMatchers("/api/google-calendar/**").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                // Módulo Financeiro
-                .requestMatchers("/api/financeiro/**", "/api/financial/**").hasAnyRole("GESTOR", "TATUADOR")
+                // Módulo Financeiro e Comissões
+                .requestMatchers("/api/financeiro/**", "/api/financial/**", "/api/comissoes/**", "/api/commissions/**").hasAnyRole("GESTOR", "TATUADOR")
 
                 // Módulo de Estoque e Insumos
-                .requestMatchers("/api/estoque/**", "/api/stock/**").hasAnyRole("GESTOR", "TATUADOR")
+                .requestMatchers("/api/estoque/**", "/api/stock/**", "/api/insumos/**").hasAnyRole("GESTOR", "TATUADOR")
 
                 // Módulo de Fichas de Anamnese
                 .requestMatchers("/api/fichas-anamnese/**", "/api/anamnese/**").hasAnyRole("GESTOR", "TATUADOR", "CLIENTE")
@@ -63,8 +70,14 @@ public class SecurityConfig {
                 // Módulo de Agendamentos
                 .requestMatchers("/api/agendamentos/**", "/api/appointments/**", "/api/sessions/**").hasAnyRole("GESTOR", "TATUADOR", "CLIENTE")
 
-                // Todas as outras rotas exigem autenticação
-                .requestMatchers("/api/google-calendar/**").permitAll()
+                // Módulos Operacionais: Projetos, Orçamentos, Kanban e Aftercare
+                .requestMatchers("/api/projetos/**", "/api/orcamentos/**", "/api/kanban-cards/**", "/api/aftercare/**").hasAnyRole("GESTOR", "TATUADOR")
+
+                // Módulo de Usuários
+                .requestMatchers("/api/usuarios/**", "/api/artists/**", "/api/tatuadores/**").authenticated()
+
+                // Qualquer outra rota exige autenticação
+                .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

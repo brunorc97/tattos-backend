@@ -17,6 +17,8 @@ import com.tattos.repository.AgendamentoRepository;
 import com.tattos.repository.TransacaoFinanceiraRepository;
 import com.tattos.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,8 +52,9 @@ public class AgendamentoService {
         LocalDateTime fim = inicio.plusMinutes(duracao);
         validarConflitos(tatuador.getId(), dto.getCabine(), inicio, fim, null);
         BigDecimal desconto = calcularDescontoIndicacao(dto.getCodigoIndicacao(), cliente.getId(), dto.getValor());
-        // Valor do sinal será definido ao gerar o PIX via endpoint específico
-        BigDecimal sinal = BigDecimal.ZERO;
+        BigDecimal sinal = (dto.getValorSinal() != null && dto.getValorSinal().compareTo(BigDecimal.ZERO) > 0)
+                ? dto.getValorSinal()
+                : (dto.getValor() != null ? dto.getValor().multiply(new BigDecimal("0.20")).setScale(2, RoundingMode.HALF_UP) : BigDecimal.ZERO);
         String pixCopiaECola = "00020126580014BR.GOV.BCB.PIX0136tattos-pix-sinal-" + UUID.randomUUID().toString().substring(0, 8) + "5204000053039865802BR5910TATTOS ERP6009SAO PAULO62070503***6304";
         Agendamento agendamento = Agendamento.builder()
                 .cliente(cliente)
@@ -104,11 +107,43 @@ public class AgendamentoService {
 
     @Transactional
     public void marcarSinalPago(Long id) {
+        confirmarPagamentoSinal(id);
+    }
+
+    @Transactional
+    public AgendamentoResponseDTO confirmarPagamentoSinal(Long id) {
         Agendamento agendamento = agendamentoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Agendamento não encontrado com ID: " + id));
+
+        // Idempotência: Se o sinal já estiver marcado como pago, retorna sem duplicar lançamento
+        if (agendamento.isSinalPago()) {
+            return AgendamentoResponseDTO.fromEntity(agendamento);
+        }
+
         agendamento.setSinalPago(true);
         agendamento.setDataPagamento(LocalDateTime.now());
-        agendamentoRepository.save(agendamento);
+        if (agendamento.getStatus() == StatusAgendamento.AGENDADO) {
+            agendamento.setStatus(StatusAgendamento.CONFIRMADO);
+        }
+
+        // Gera a transação financeira de receita do sinal recebido via PIX
+        if (agendamento.getValorSinal() != null && agendamento.getValorSinal().compareTo(BigDecimal.ZERO) > 0) {
+            TransacaoFinanceira transacaoSinal = TransacaoFinanceira.builder()
+                    .descricao("Sinal Recebido (PIX) - Agendamento #" + agendamento.getId() + " (" + agendamento.getCliente().getNome() + ")")
+                    .valor(agendamento.getValorSinal())
+                    .tipo(TipoTransacao.RECEITA)
+                    .data(LocalDate.now())
+                    .tatuador(agendamento.getTatuador())
+                    .agendamento(agendamento)
+                    .categoria("Sinal Reserva")
+                    .formaPagamento("PIX")
+                    .build();
+            transacaoSinal.calcularRepasse();
+            transacaoRepository.save(transacaoSinal);
+        }
+
+        Agendamento salvo = agendamentoRepository.save(agendamento);
+        return AgendamentoResponseDTO.fromEntity(salvo);
     }
 
     @Transactional
@@ -214,6 +249,14 @@ public class AgendamentoService {
         LocalDateTime dataFim = data != null ? data.atTime(LocalTime.MAX) : null;
         List<Agendamento> lista = agendamentoRepository.findComFiltros(tatuadorId, clienteId, status, dataInicio, dataFim);
         return lista.stream().map(AgendamentoResponseDTO::fromEntity).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<AgendamentoResponseDTO> listarPaginado(Long tatuadorId, Long clienteId, StatusAgendamento status, LocalDate data, Pageable pageable) {
+        LocalDateTime dataInicio = data != null ? data.atStartOfDay() : null;
+        LocalDateTime dataFim = data != null ? data.atTime(LocalTime.MAX) : null;
+        return agendamentoRepository.findComFiltrosPaginado(tatuadorId, clienteId, status, dataInicio, dataFim, pageable)
+                .map(AgendamentoResponseDTO::fromEntity);
     }
 
     @Transactional

@@ -4,7 +4,9 @@ import com.tattos.dto.request.OrcamentoRequestDTO;
 import com.tattos.dto.response.OrcamentoResponseDTO;
 import com.tattos.service.OrcamentoService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @Tag(name = "Orcamentos", description = "Gestão de orçamentos (Budgets)")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping({"/api/orcamentos", "/api/budgets"})
 @RequiredArgsConstructor
@@ -31,7 +34,7 @@ public class OrcamentoController {
     @Operation(summary = "Criar um orçamento")
     @PostMapping
     @PreAuthorize("hasAnyRole('GESTOR','TATUADOR')")
-    public ResponseEntity<OrcamentoResponseDTO> criar(@RequestBody OrcamentoRequestDTO dto) {
+    public ResponseEntity<OrcamentoResponseDTO> criar(@Valid @RequestBody OrcamentoRequestDTO dto) {
         OrcamentoResponseDTO created = orcamentoService.criarOrcamento(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }

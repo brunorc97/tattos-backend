@@ -2,6 +2,8 @@ package com.tattos.repository;
 
 import com.tattos.model.Agendamento;
 import com.tattos.model.enums.StatusAgendamento;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -42,6 +44,21 @@ public interface AgendamentoRepository extends JpaRepository<Agendamento, Long> 
             @Param("status") StatusAgendamento status,
             @Param("dataInicio") LocalDateTime dataInicio,
             @Param("dataFim") LocalDateTime dataFim);
+
+    @Query("SELECT a FROM Agendamento a WHERE " +
+           "(:tatuadorId IS NULL OR a.tatuador.id = :tatuadorId) AND " +
+           "(:clienteId IS NULL OR a.cliente.id = :clienteId) AND " +
+           "(:status IS NULL OR a.status = :status) AND " +
+           "(:dataInicio IS NULL OR a.dataHora >= :dataInicio) AND " +
+           "(:dataFim IS NULL OR a.dataHora <= :dataFim) " +
+           "ORDER BY a.dataHora ASC")
+    Page<Agendamento> findComFiltrosPaginado(
+            @Param("tatuadorId") Long tatuadorId,
+            @Param("clienteId") Long clienteId,
+            @Param("status") StatusAgendamento status,
+            @Param("dataInicio") LocalDateTime dataInicio,
+            @Param("dataFim") LocalDateTime dataFim,
+            Pageable pageable);
 
     /**
      * Verifica se existe conflito de horário para o tatuador no intervalo informado.

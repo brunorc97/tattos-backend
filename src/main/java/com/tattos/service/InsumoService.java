@@ -8,6 +8,8 @@ import com.tattos.exception.ResourceNotFoundException;
 import com.tattos.model.Insumo;
 import com.tattos.repository.InsumoRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -118,6 +120,19 @@ public class InsumoService {
             lista = insumoRepository.findAll();
         }
         return lista.stream().map(InsumoResponseDTO::fromEntity).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<InsumoResponseDTO> listarPaginado(String categoria, String query, Pageable pageable) {
+        Page<Insumo> page;
+        if (categoria != null && !categoria.trim().isEmpty()) {
+            page = insumoRepository.findByCategoriaIgnoreCase(categoria.trim(), pageable);
+        } else if (query != null && !query.trim().isEmpty()) {
+            page = insumoRepository.findByNomeContainingIgnoreCase(query.trim(), pageable);
+        } else {
+            page = insumoRepository.findAll(pageable);
+        }
+        return page.map(InsumoResponseDTO::fromEntity);
     }
 
     @Transactional

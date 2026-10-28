@@ -6,6 +6,11 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -13,6 +18,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "insumos")
+@EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -59,13 +65,21 @@ public class Insumo {
     @Column(name = "valor_unitario", precision = 10, scale = 2)
     private BigDecimal valorUnitario = BigDecimal.ZERO;
 
-    @Builder.Default
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @CreatedBy
+    @Column(name = "created_by", length = 150, updatable = false)
+    private String createdBy;
 
-    @Builder.Default
+    @LastModifiedBy
+    @Column(name = "last_modified_by", length = 150)
+    private String lastModifiedBy;
+
+    @CreatedDate
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    @LastModifiedDate
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    private LocalDateTime updatedAt;
 
     @PreUpdate
     public void preUpdate() {

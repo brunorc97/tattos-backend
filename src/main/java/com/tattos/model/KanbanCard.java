@@ -2,10 +2,14 @@ package com.tattos.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "kanban_cards")
+@EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -37,6 +41,7 @@ public class KanbanCard {
     @JoinColumn(name = "projeto_id")
     private Projeto projeto;
 
+    @CreatedDate
     @Column(name = "data_criacao", nullable = false, updatable = false)
-    private LocalDateTime dataCriacao = LocalDateTime.now();
+    private LocalDateTime dataCriacao;
 }

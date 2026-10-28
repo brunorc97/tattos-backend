@@ -3,11 +3,17 @@ package com.tattos.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "fichas_anamnese")
+@EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -72,9 +78,21 @@ public class FichaAnamnese {
     @Column(columnDefinition = "TEXT")
     private String observacoes;
 
-    @Builder.Default
+    @CreatedBy
+    @Column(name = "created_by", length = 150, updatable = false)
+    private String createdBy;
+
+    @LastModifiedBy
+    @Column(name = "last_modified_by", length = 150)
+    private String lastModifiedBy;
+
+    @CreatedDate
     @Column(name = "data_criacao", updatable = false)
-    private LocalDateTime dataCriacao = LocalDateTime.now();
+    private LocalDateTime dataCriacao;
+
+    @LastModifiedDate
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     /**
      * Avalia os alertas clínicos automaticamente com base nas condições informadas.

@@ -54,6 +54,11 @@ public class FichaAnamneseService {
 
     @Transactional
     public FichaAnamneseResponseDTO criar(FichaAnamneseRequestDTO dto) {
+        return registrarFicha(dto);
+    }
+
+    @Transactional
+    public FichaAnamneseResponseDTO registrarFicha(FichaAnamneseRequestDTO dto) {
         Usuario cliente = usuarioRepository.findById(dto.getClienteId())
                 .orElseThrow(() -> new ResourceNotFoundException("Cliente não encontrado com ID: " + dto.getClienteId()));
 
