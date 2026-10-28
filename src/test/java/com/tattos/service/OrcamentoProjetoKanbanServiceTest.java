@@ -101,7 +101,7 @@ class OrcamentoProjetoKanbanServiceTest {
     @Test
     @DisplayName("Deve lançar exceção ao tentar aprovar projeto inexistente")
     void deveLancarExcecaoAoAprovarProjetoInexistente() {
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(com.tattos.exception.ResourceNotFoundException.class,
                 () -> projetoService.aprovarProjeto(9999L));
     }
 
