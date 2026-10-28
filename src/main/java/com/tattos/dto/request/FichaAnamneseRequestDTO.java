@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @Data
 @NoArgsConstructor
@@ -13,32 +14,38 @@ import lombok.NoArgsConstructor;
 public class FichaAnamneseRequestDTO {
 
     @NotNull(message = "{validation.cliente.id.required}")
-    private Long clienteId;
+        @Schema(example = "1")private Long clienteId;
 
-    private Long agendamentoId;
+    
+    @Schema(example = "10")private Long agendamentoId;
 
-    private String historicoSaude;
+    
+    @Schema(example = "Sem cirurgias recentes")private String historicoSaude;
 
-    private String alergias;
-
-    @Builder.Default
-    private Boolean termoAssinado = false;
-
-    private String assinaturaDigital;
+    
+    @Schema(example = "Níquel")private String alergias;
 
     @Builder.Default
-    private Boolean diabetes = false;
+        @Schema(example = "true")private Boolean termoAssinado = false;
+
+    
+    @Schema(example = "base64-da-assinatura")private String assinaturaDigital;
 
     @Builder.Default
-    private Boolean hemofilia = false;
+        @Schema(example = "false")private Boolean diabetes = false;
 
     @Builder.Default
-    private Boolean hipertensao = false;
+        @Schema(example = "false")private Boolean hemofilia = false;
 
     @Builder.Default
-    private Boolean gestanteLactante = false;
+        @Schema(example = "false")private Boolean hipertensao = false;
 
-    private String medicamentosUso;
+    @Builder.Default
+        @Schema(example = "false")private Boolean gestanteLactante = false;
 
-    private String observacoes;
+    
+    @Schema(example = "Nenhum")private String medicamentosUso;
+
+    
+    @Schema(example = "Pele sensível")private String observacoes;
 }

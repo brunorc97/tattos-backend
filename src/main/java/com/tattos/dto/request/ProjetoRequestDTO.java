@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @Data
 @NoArgsConstructor
@@ -15,9 +16,11 @@ public class ProjetoRequestDTO {
 
     @NotBlank(message = "{validation.projeto.nome.required}")
     @Size(min = 2, max = 255, message = "{validation.projeto.nome.size}")
-    private String nome;
+        @Schema(example = "Capa de costas oriental")private String nome;
 
-    private String descricao;
+    
+    @Schema(example = "Dragão japonês, 6 sessões")private String descricao;
 
-    private Boolean aprovado;
+    
+    @Schema(example = "false")private Boolean aprovado;
 }

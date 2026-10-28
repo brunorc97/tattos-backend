@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @Data
 @NoArgsConstructor
@@ -19,29 +20,31 @@ import java.time.LocalDateTime;
 public class AgendamentoRequestDTO {
 
     @NotNull(message = "{validation.cliente.id.required}")
-    private Long clienteId;
+        @Schema(example = "1")private Long clienteId;
 
     @NotNull(message = "{validation.tatuador.id.required}")
-    private Long tatuadorId;
+        @Schema(example = "2")private Long tatuadorId;
 
     @NotNull(message = "{validation.agendamento.data.required}")
     @FutureOrPresent(message = "{validation.future}")
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm[:ss]")
-    private LocalDateTime dataHora;
+        @Schema(example = "2026-11-15T14:00:00")private LocalDateTime dataHora;
 
     @Builder.Default
-    private Integer duracaoMinutos = 60;
+        @Schema(example = "120")private Integer duracaoMinutos = 60;
 
     @NotBlank(message = "{validation.cabine.required}")
-    private String cabine;
+        @Schema(example = "A1")private String cabine;
 
     @NotNull(message = "{validation.procedimento.valor.required}")
-    private BigDecimal valor;
+        @Schema(example = "1500.00")private BigDecimal valor;
 
     @Builder.Default
-    private BigDecimal valorSinal = BigDecimal.ZERO;
+        @Schema(example = "300.00")private BigDecimal valorSinal = BigDecimal.ZERO;
 
-    private String codigoIndicacao;
+    
+    @Schema(example = "ABC123")private String codigoIndicacao;
 
-    private String observacoes;
+    
+    @Schema(example = "Cliente prefere música ambiente")private String observacoes;
 }

@@ -10,6 +10,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @Data
 @NoArgsConstructor
@@ -19,11 +20,12 @@ public class OrcamentoRequestDTO {
 
     @NotBlank(message = "{validation.orcamento.nome.required}")
     @Size(min = 2, max = 255, message = "{validation.orcamento.nome.size}")
-    private String nome;
+        @Schema(example = "Fechamento de braço - realismo")private String nome;
 
     @NotNull(message = "{validation.valor.required}")
     @DecimalMin(value = "0.01", message = "{validation.positive}")
-    private BigDecimal valor;
+        @Schema(example = "3500.00")private BigDecimal valor;
 
-    private Long projetoId;
+    
+    @Schema(example = "3")private Long projetoId;
 }

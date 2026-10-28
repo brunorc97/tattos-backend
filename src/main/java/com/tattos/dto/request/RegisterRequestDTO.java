@@ -10,6 +10,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @Data
 @NoArgsConstructor
@@ -17,32 +18,41 @@ import java.math.BigDecimal;
 @Builder
 public class RegisterRequestDTO {
 
-    private String nome;
-    private String name;
+    
+    @Schema(example = "Ana Souza")private String nome;
+        @Schema(example = "Ana Souza")private String name;
 
     @NotBlank(message = "{validation.email.required}")
     @Email(message = "{validation.email.invalid}")
-    private String email;
+        @Schema(example = "ana@exemplo.com")private String email;
 
-    private String senha;
-    private String password;
+    
+    @Schema(example = "senha123")private String senha;
+        @Schema(example = "senha123")private String password;
 
-    private UserRole role;
+    
+    @Schema(example = "ROLE_CLIENTE")private UserRole role;
 
-    private String telefone;
-    private String phone;
+    
+    @Schema(example = "(11) 99999-0000")private String telefone;
+        @Schema(example = "(11) 99999-0000")private String phone;
 
-    private String endereco;
-    private String address;
+    
+    @Schema(example = "Rua Augusta, 1000")private String endereco;
+        @Schema(example = "Rua Augusta, 1000")private String address;
 
-    private String especialidade;
-    private String specialty;
+    
+    @Schema(example = "Fineline")private String especialidade;
+        @Schema(example = "Fineline")private String specialty;
 
-    private String bio;
+    
+    @Schema(example = "Tatuadora há 8 anos")private String bio;
 
-    private String cargo;
+    
+    @Schema(example = "Recepcionista")private String cargo;
 
-    private BigDecimal comissaoPercentual;
+    
+    @Schema(example = "60.00")private BigDecimal comissaoPercentual;
 
     public String getResolvedNome() {
         if (nome != null && !nome.trim().isEmpty()) return nome.trim();

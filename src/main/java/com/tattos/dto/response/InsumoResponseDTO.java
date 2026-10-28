@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @Data
 @NoArgsConstructor
@@ -16,7 +17,7 @@ import java.time.LocalDateTime;
 @Builder
 public class InsumoResponseDTO {
 
-    private Long id;
+    @Schema(example = "1")private Long id;
     private String codigo;
     private String nome;
     private Integer quantidadeAtual;
