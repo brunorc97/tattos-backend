@@ -48,7 +48,7 @@ dependencies {
 	runtimeOnly 'com.mysql:mysql-connector-j'
 
 	// OpenAPI / Swagger UI
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.2.0'
 
 	// Structured JSON logging (Logstash encoder)
 	implementation 'net.logstash.logback:logstash-logback-encoder:7.4'

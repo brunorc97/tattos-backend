@@ -5,6 +5,8 @@ logging:
   level:
     root: INFO
     org.springframework.web: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSS} %5p [%15.15t] [%X{correlationId:-no-trace}] [%X{user:-anon}] %-40.40logger{39} : %m%n"
 
 spring:
   application:
