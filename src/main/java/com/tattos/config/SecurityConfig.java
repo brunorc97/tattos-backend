@@ -51,30 +51,37 @@ public class SecurityConfig {
                 )
             )
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/auth/**", "/api/v1/auth/**").permitAll()
                 .requestMatchers("/error").permitAll()
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
-                .requestMatchers("/api/google-calendar/**").permitAll()
+                .requestMatchers("/api/google-calendar/**", "/api/v1/google-calendar/**").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                 // Módulo Financeiro e Comissões
-                .requestMatchers("/api/financeiro/**", "/api/financial/**", "/api/comissoes/**", "/api/commissions/**").hasAnyRole("GESTOR", "TATUADOR")
+                .requestMatchers("/api/financeiro/**", "/api/financial/**", "/api/comissoes/**", "/api/commissions/**",
+                        "/api/v1/financeiro/**", "/api/v1/financial/**", "/api/v1/comissoes/**", "/api/v1/commissions/**").hasAnyRole("GESTOR", "TATUADOR")
 
                 // Módulo de Estoque e Insumos
-                .requestMatchers("/api/estoque/**", "/api/stock/**", "/api/insumos/**").hasAnyRole("GESTOR", "TATUADOR")
+                .requestMatchers("/api/estoque/**", "/api/stock/**", "/api/insumos/**",
+                        "/api/v1/estoque/**", "/api/v1/stock/**", "/api/v1/insumos/**").hasAnyRole("GESTOR", "TATUADOR")
 
                 // Módulo de Fichas de Anamnese
-                .requestMatchers("/api/fichas-anamnese/**", "/api/anamnese/**").hasAnyRole("GESTOR", "TATUADOR", "CLIENTE")
+                .requestMatchers("/api/fichas-anamnese/**", "/api/anamnese/**",
+                        "/api/v1/fichas-anamnese/**", "/api/v1/anamnese/**", "/api/v1/anamneses/**").hasAnyRole("GESTOR", "TATUADOR", "CLIENTE")
 
                 // Módulo de Agendamentos
-                .requestMatchers("/api/agendamentos/**", "/api/appointments/**", "/api/sessions/**").hasAnyRole("GESTOR", "TATUADOR", "CLIENTE")
+                .requestMatchers("/api/agendamentos/**", "/api/appointments/**", "/api/sessions/**",
+                        "/api/v1/agendamentos/**", "/api/v1/appointments/**", "/api/v1/sessions/**").hasAnyRole("GESTOR", "TATUADOR", "CLIENTE")
 
                 // Módulos Operacionais: Projetos, Orçamentos, Kanban e Aftercare
-                .requestMatchers("/api/projetos/**", "/api/orcamentos/**", "/api/kanban-cards/**", "/api/aftercare/**").hasAnyRole("GESTOR", "TATUADOR")
+                .requestMatchers("/api/projetos/**", "/api/orcamentos/**", "/api/kanban-cards/**", "/api/aftercare/**",
+                        "/api/v1/projetos/**", "/api/v1/projects/**", "/api/v1/orcamentos/**", "/api/v1/budgets/**",
+                        "/api/v1/kanban/**", "/api/v1/kanban-cards/**", "/api/v1/aftercare/**").hasAnyRole("GESTOR", "TATUADOR")
 
                 // Módulo de Usuários
-                .requestMatchers("/api/usuarios/**", "/api/artists/**", "/api/tatuadores/**").authenticated()
+                .requestMatchers("/api/usuarios/**", "/api/artists/**", "/api/tatuadores/**",
+                        "/api/v1/usuarios/**", "/api/v1/artists/**", "/api/v1/tatuadores/**").authenticated()
 
                 // Qualquer outra rota exige autenticação
                 .anyRequest().authenticated()
