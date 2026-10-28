@@ -29,19 +29,9 @@ public class InsumoController {
 
     private final InsumoService insumoService;
 
-    @Operation(summary = "Listar insumos", description = "Retorna todos os insumos com filtros opcionais por categoria ou nome.")
-    @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso")
-    @GetMapping
-    @PreAuthorize("hasAnyRole('GESTOR','TATUADOR')")
-    public ResponseEntity<List<InsumoResponseDTO>> listar(
-            @RequestParam(required = false) String categoria,
-            @RequestParam(required = false) String query) {
-        return ResponseEntity.ok(insumoService.listar(categoria, query));
-    }
-
-    @Operation(summary = "Listar insumos com paginação", description = "Retorna insumos paginados com filtros opcionais por categoria ou nome.")
+    @Operation(summary = "Listar insumos", description = "Retorna insumos paginados (Page) com filtros opcionais por categoria ou nome. Suporta page, size e sort.")
     @ApiResponse(responseCode = "200", description = "Página retornada com sucesso")
-    @GetMapping({"/paginado", "/paged"})
+    @GetMapping({"", "/paginado", "/paged"})
     @PreAuthorize("hasAnyRole('GESTOR','TATUADOR')")
     public ResponseEntity<Page<InsumoResponseDTO>> listarPaginado(
             @RequestParam(required = false) String categoria,

@@ -36,22 +36,9 @@ public class AgendamentoController {
 
     private final AgendamentoService agendamentoService;
 
-    @Operation(summary = "Listar agendamentos", description = "Retorna todos os agendamentos com filtros opcionais.")
-    @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso")
-    @GetMapping
-    @PreAuthorize("hasAnyRole('GESTOR','TATUADOR','CLIENTE')")
-    public ResponseEntity<List<AgendamentoResponseDTO>> listar(
-            @Parameter(description = "Filtrar por ID do tatuador") @RequestParam(required = false) Long tatuadorId,
-            @Parameter(description = "Filtrar por ID do cliente")  @RequestParam(required = false) Long clienteId,
-            @Parameter(description = "Filtrar por status")         @RequestParam(required = false) StatusAgendamento status,
-            @Parameter(description = "Filtrar por data (ISO)")     @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data) {
-        return ResponseEntity.ok(agendamentoService.listar(tatuadorId, clienteId, status, data));
-    }
-
-    @Operation(summary = "Listar agendamentos com paginação", description = "Retorna agendamentos paginados com filtros opcionais.")
+    @Operation(summary = "Listar agendamentos", description = "Retorna agendamentos paginados (Page) com filtros opcionais. Suporta page, size e sort.")
     @ApiResponse(responseCode = "200", description = "Página retornada com sucesso")
-    @GetMapping({"/paginado", "/paged"})
+    @GetMapping({"", "/paginado", "/paged"})
     @PreAuthorize("hasAnyRole('GESTOR','TATUADOR','CLIENTE')")
     public ResponseEntity<Page<AgendamentoResponseDTO>> listarPaginado(
             @Parameter(description = "Filtrar por ID do tatuador") @RequestParam(required = false) Long tatuadorId,

@@ -244,14 +244,6 @@ public class AgendamentoService {
     }
 
     @Transactional(readOnly = true)
-    public List<AgendamentoResponseDTO> listar(Long tatuadorId, Long clienteId, StatusAgendamento status, LocalDate data) {
-        LocalDateTime dataInicio = data != null ? data.atStartOfDay() : null;
-        LocalDateTime dataFim = data != null ? data.atTime(LocalTime.MAX) : null;
-        List<Agendamento> lista = agendamentoRepository.findComFiltros(tatuadorId, clienteId, status, dataInicio, dataFim);
-        return lista.stream().map(AgendamentoResponseDTO::fromEntity).toList();
-    }
-
-    @Transactional(readOnly = true)
     public Page<AgendamentoResponseDTO> listarPaginado(Long tatuadorId, Long clienteId, StatusAgendamento status, LocalDate data, Pageable pageable) {
         LocalDateTime dataInicio = data != null ? data.atStartOfDay() : null;
         LocalDateTime dataFim = data != null ? data.atTime(LocalTime.MAX) : null;
