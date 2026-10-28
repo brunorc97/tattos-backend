@@ -14,6 +14,8 @@ import com.tattos.repository.AgendamentoRepository;
 import com.tattos.repository.TransacaoFinanceiraRepository;
 import com.tattos.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -188,6 +190,12 @@ public class TransacaoService {
         return transacaoRepository.findComFiltros(tipo, tatuadorId, status, inicio, fim).stream()
                 .map(TransacaoResponseDTO::fromEntity)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<TransacaoResponseDTO> listarPaginado(TipoTransacao tipo, Long tatuadorId, StatusTransacao status, LocalDate inicio, LocalDate fim, Pageable pageable) {
+        return transacaoRepository.findComFiltrosPaginado(tipo, tatuadorId, status, inicio, fim, pageable)
+                .map(TransacaoResponseDTO::fromEntity);
     }
 
     @Transactional(readOnly = true)

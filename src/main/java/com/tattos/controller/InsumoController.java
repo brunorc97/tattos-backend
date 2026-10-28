@@ -10,6 +10,9 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -34,6 +37,17 @@ public class InsumoController {
             @RequestParam(required = false) String categoria,
             @RequestParam(required = false) String query) {
         return ResponseEntity.ok(insumoService.listar(categoria, query));
+    }
+
+    @Operation(summary = "Listar insumos com paginação", description = "Retorna insumos paginados com filtros opcionais por categoria ou nome.")
+    @ApiResponse(responseCode = "200", description = "Página retornada com sucesso")
+    @GetMapping({"/paginado", "/paged"})
+    @PreAuthorize("hasAnyRole('GESTOR','TATUADOR')")
+    public ResponseEntity<Page<InsumoResponseDTO>> listarPaginado(
+            @RequestParam(required = false) String categoria,
+            @RequestParam(required = false) String query,
+            @PageableDefault(size = 20, sort = "nome") Pageable pageable) {
+        return ResponseEntity.ok(insumoService.listarPaginado(categoria, query, pageable));
     }
 
     @Operation(summary = "Alertas de estoque crítico", description = "Retorna insumos abaixo do nível crítico definido.")

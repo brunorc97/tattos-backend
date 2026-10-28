@@ -3,6 +3,8 @@ package com.tattos.repository;
 import com.tattos.model.TransacaoFinanceira;
 import com.tattos.model.enums.StatusTransacao;
 import com.tattos.model.enums.TipoTransacao;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -62,4 +64,19 @@ public interface TransacaoFinanceiraRepository extends JpaRepository<TransacaoFi
             @Param("status") StatusTransacao status,
             @Param("inicio") LocalDate inicio,
             @Param("fim") LocalDate fim);
+
+    @Query("SELECT t FROM TransacaoFinanceira t WHERE " +
+           "(:tipo IS NULL OR t.tipo = :tipo) AND " +
+           "(:tatuadorId IS NULL OR t.tatuador.id = :tatuadorId) AND " +
+           "(:status IS NULL OR t.status = :status) AND " +
+           "(:inicio IS NULL OR t.data >= :inicio) AND " +
+           "(:fim IS NULL OR t.data <= :fim) " +
+           "ORDER BY t.data DESC, t.id DESC")
+    Page<TransacaoFinanceira> findComFiltrosPaginado(
+            @Param("tipo") TipoTransacao tipo,
+            @Param("tatuadorId") Long tatuadorId,
+            @Param("status") StatusTransacao status,
+            @Param("inicio") LocalDate inicio,
+            @Param("fim") LocalDate fim,
+            Pageable pageable);
 }
