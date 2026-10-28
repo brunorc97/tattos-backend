@@ -1,11 +1,11 @@
 package com.tattos.security;
 
+import com.tattos.config.AppSecurityProperties;
 import com.tattos.model.Usuario;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -22,12 +22,10 @@ public class JwtTokenProvider {
     private final SecretKey key;
     private final long expirationTime;
 
-    public JwtTokenProvider(
-            @Value("${jwt.secret}") String secret,
-            @Value("${jwt.expiration:86400000}") long expirationTime) {
-        byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
+    public JwtTokenProvider(AppSecurityProperties properties) {
+        byte[] keyBytes = properties.getJwtSecret().getBytes(StandardCharsets.UTF_8);
         this.key = Keys.hmacShaKeyFor(keyBytes);
-        this.expirationTime = expirationTime;
+        this.expirationTime = properties.getJwtExpiration();
     }
 
     public long getExpirationTime() {
