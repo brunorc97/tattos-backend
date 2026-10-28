@@ -21,7 +21,7 @@ import java.util.List;
 @Tag(name = "Usuários", description = "Gestão de usuários e cadastro de equipe")
 @SecurityRequirement(name = "bearerAuth")
 @RestController
-@RequestMapping({"/api/usuarios", "/api/artists", "/api/tatuadores"})
+@RequestMapping({"/api/v1/usuarios", "/api/v1/artists", "/api/v1/tatuadores", "/api/usuarios", "/api/artists", "/api/tatuadores"})
 @RequiredArgsConstructor
 public class UsuarioController {
 

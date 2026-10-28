@@ -30,7 +30,7 @@ import java.util.Map;
 @Tag(name = "Financeiro", description = "Transações financeiras, balanço mensal e repasses de comissão")
 @SecurityRequirement(name = "bearerAuth")
 @RestController
-@RequestMapping({"/api/financeiro", "/api/financial"})
+@RequestMapping({"/api/v1/financeiro", "/api/v1/financial", "/api/financeiro", "/api/financial"})
 @RequiredArgsConstructor
 public class TransacaoController {
 

@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/google-calendar")
+@RequestMapping({"/api/v1/google-calendar", "/api/google-calendar"})
 @RequiredArgsConstructor
 public class GoogleCalendarController {
 

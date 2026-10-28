@@ -21,7 +21,7 @@ import java.util.Map;
 @Tag(name = "Fichas de Anamnese", description = "Biossegurança: registro e consulta de fichas clínicas de clientes")
 @SecurityRequirement(name = "bearerAuth")
 @RestController
-@RequestMapping({"/api/fichas-anamnese", "/api/anamnese", "/api/anamneses"})
+@RequestMapping({"/api/v1/fichas-anamnese", "/api/v1/anamnese", "/api/v1/anamneses", "/api/fichas-anamnese", "/api/anamnese", "/api/anamneses"})
 @RequiredArgsConstructor
 public class FichaAnamneseController {
 

@@ -18,7 +18,7 @@ import java.util.List;
 @Tag(name = "Projetos", description = "Gestão de projetos e aprovação")
 @SecurityRequirement(name = "bearerAuth")
 @RestController
-@RequestMapping({"/api/projetos", "/api/projects"})
+@RequestMapping({"/api/v1/projetos", "/api/v1/projects", "/api/projetos", "/api/projects"})
 @RequiredArgsConstructor
 public class ProjetoController {
 

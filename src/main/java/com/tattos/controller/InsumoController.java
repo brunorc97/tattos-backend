@@ -23,7 +23,7 @@ import java.util.List;
 @Tag(name = "Estoque / Insumos", description = "Gestão de insumos e controle de estoque do estúdio")
 @SecurityRequirement(name = "bearerAuth")
 @RestController
-@RequestMapping({"/api/estoque", "/api/stock", "/api/insumos"})
+@RequestMapping({"/api/v1/estoque", "/api/v1/stock", "/api/v1/insumos", "/api/estoque", "/api/stock", "/api/insumos"})
 @RequiredArgsConstructor
 public class InsumoController {
 

@@ -30,7 +30,7 @@ import java.util.List;
 @Tag(name = "Agendamentos", description = "Gestão de sessões de tatuagem e agendamentos")
 @SecurityRequirement(name = "bearerAuth")
 @RestController
-@RequestMapping({"/api/agendamentos", "/api/appointments", "/api/sessions"})
+@RequestMapping({"/api/v1/agendamentos", "/api/v1/appointments", "/api/v1/sessions", "/api/agendamentos", "/api/appointments", "/api/sessions"})
 @RequiredArgsConstructor
 public class AgendamentoController {
 
