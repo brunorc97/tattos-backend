@@ -13,6 +13,9 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -44,6 +47,20 @@ public class TransacaoController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fim) {
         return ResponseEntity.ok(transacaoService.listar(tipo, tatuadorId, status, inicio, fim));
+    }
+
+    @Operation(summary = "Listar transações com paginação", description = "Filtra transações paginadas por tipo, tatuador, status e período.")
+    @ApiResponse(responseCode = "200", description = "Página retornada com sucesso")
+    @GetMapping({"/transacoes/paginado", "/transactions/paged"})
+    @PreAuthorize("hasAnyRole('GESTOR','TATUADOR')")
+    public ResponseEntity<Page<TransacaoResponseDTO>> listarPaginado(
+            @RequestParam(required = false) TipoTransacao tipo,
+            @RequestParam(required = false) Long tatuadorId,
+            @RequestParam(required = false) StatusTransacao status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fim,
+            @PageableDefault(size = 20, sort = "data") Pageable pageable) {
+        return ResponseEntity.ok(transacaoService.listarPaginado(tipo, tatuadorId, status, inicio, fim, pageable));
     }
 
     @Operation(summary = "Buscar transação por ID")
