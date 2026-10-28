@@ -1,1 +1,0 @@
-tattos-scheduling-rules
