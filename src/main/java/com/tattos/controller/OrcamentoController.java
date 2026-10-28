@@ -18,7 +18,7 @@ import java.util.List;
 @Tag(name = "Orcamentos", description = "Gestão de orçamentos (Budgets)")
 @SecurityRequirement(name = "bearerAuth")
 @RestController
-@RequestMapping({"/api/orcamentos", "/api/budgets"})
+@RequestMapping({"/api/v1/orcamentos", "/api/v1/budgets", "/api/orcamentos", "/api/budgets"})
 @RequiredArgsConstructor
 public class OrcamentoController {
 

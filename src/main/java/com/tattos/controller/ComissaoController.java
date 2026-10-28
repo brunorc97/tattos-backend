@@ -27,7 +27,7 @@ import java.time.LocalDate;
 @Tag(name = "Comissões", description = "Exportação de relatórios de comissão para tatuadores")
 @SecurityRequirement(name = "bearerAuth")
 @RestController
-@RequestMapping({"/api/comissoes", "/api/commissions"})
+@RequestMapping({"/api/v1/comissoes", "/api/v1/commissions", "/api/comissoes", "/api/commissions"})
 @RequiredArgsConstructor
 public class ComissaoController {
 

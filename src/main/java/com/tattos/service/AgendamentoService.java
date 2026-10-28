@@ -9,12 +9,9 @@ import com.tattos.exception.BusinessException;
 import com.tattos.exception.ConflictException;
 import com.tattos.exception.ResourceNotFoundException;
 import com.tattos.model.Agendamento;
-import com.tattos.model.TransacaoFinanceira;
 import com.tattos.model.Usuario;
 import com.tattos.model.enums.StatusAgendamento;
-import com.tattos.model.enums.TipoTransacao;
 import com.tattos.repository.AgendamentoRepository;
-import com.tattos.repository.TransacaoFinanceiraRepository;
 import com.tattos.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -36,7 +33,7 @@ public class AgendamentoService {
 
     private final AgendamentoRepository agendamentoRepository;
     private final UsuarioRepository usuarioRepository;
-    private final TransacaoFinanceiraRepository transacaoRepository;
+    private final org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public AgendamentoResponseDTO criar(AgendamentoRequestDTO dto) {
@@ -126,23 +123,9 @@ public class AgendamentoService {
             agendamento.setStatus(StatusAgendamento.CONFIRMADO);
         }
 
-        // Gera a transação financeira de receita do sinal recebido via PIX
-        if (agendamento.getValorSinal() != null && agendamento.getValorSinal().compareTo(BigDecimal.ZERO) > 0) {
-            TransacaoFinanceira transacaoSinal = TransacaoFinanceira.builder()
-                    .descricao("Sinal Recebido (PIX) - Agendamento #" + agendamento.getId() + " (" + agendamento.getCliente().getNome() + ")")
-                    .valor(agendamento.getValorSinal())
-                    .tipo(TipoTransacao.RECEITA)
-                    .data(LocalDate.now())
-                    .tatuador(agendamento.getTatuador())
-                    .agendamento(agendamento)
-                    .categoria("Sinal Reserva")
-                    .formaPagamento("PIX")
-                    .build();
-            transacaoSinal.calcularRepasse();
-            transacaoRepository.save(transacaoSinal);
-        }
-
         Agendamento salvo = agendamentoRepository.save(agendamento);
+        // Transação financeira do sinal é gerada pelo TransacaoAutomaticaListener após o commit
+        eventPublisher.publishEvent(new com.tattos.event.SinalPagoEvent(salvo.getId()));
         return AgendamentoResponseDTO.fromEntity(salvo);
     }
 
@@ -204,30 +187,11 @@ public class AgendamentoService {
             String obs = agendamento.getObservacoes() != null ? agendamento.getObservacoes() + "\n" : "";
             agendamento.setObservacoes(obs + "[Cancelado] Motivo: " + motivo);
         }
-        if (novoStatus == StatusAgendamento.REALIZADO && agendamento.getValor() != null) {
-            BigDecimal desconto = agendamento.getDescontoAplicado() != null ? agendamento.getDescontoAplicado() : BigDecimal.ZERO;
-            BigDecimal valorLiquidoTotal = agendamento.getValor().subtract(desconto);
-            BigDecimal valorSaldoRestante = valorLiquidoTotal;
-            if (agendamento.isSinalPago() && agendamento.getValorSinal() != null) {
-                valorSaldoRestante = valorSaldoRestante.subtract(agendamento.getValorSinal());
-            }
-            if (valorSaldoRestante.compareTo(BigDecimal.ZERO) < 0) {
-                valorSaldoRestante = BigDecimal.ZERO;
-            }
-            TransacaoFinanceira transacao = TransacaoFinanceira.builder()
-                    .descricao("Procedimento Concluído (Saldo) - Agendamento #" + agendamento.getId() + " (" + agendamento.getCliente().getNome() + ")")
-                    .valor(valorSaldoRestante)
-                    .tipo(TipoTransacao.RECEITA)
-                    .data(LocalDate.now())
-                    .tatuador(agendamento.getTatuador())
-                    .agendamento(agendamento)
-                    .categoria("Procedimento Tattoo")
-                    .formaPagamento("A Definir")
-                    .build();
-            transacao.calcularRepasse();
-            transacaoRepository.save(transacao);
-        }
         Agendamento atualizado = agendamentoRepository.save(agendamento);
+        if (novoStatus == StatusAgendamento.REALIZADO && atualizado.getValor() != null) {
+            // Transação do saldo é gerada pelo TransacaoAutomaticaListener após o commit
+            eventPublisher.publishEvent(new com.tattos.event.AgendamentoRealizadoEvent(atualizado.getId()));
+        }
         return AgendamentoResponseDTO.fromEntity(atualizado);
     }
 
@@ -241,14 +205,6 @@ public class AgendamentoService {
         Agendamento agendamento = agendamentoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Agendamento não encontrado com ID: " + id));
         return AgendamentoResponseDTO.fromEntity(agendamento);
-    }
-
-    @Transactional(readOnly = true)
-    public List<AgendamentoResponseDTO> listar(Long tatuadorId, Long clienteId, StatusAgendamento status, LocalDate data) {
-        LocalDateTime dataInicio = data != null ? data.atStartOfDay() : null;
-        LocalDateTime dataFim = data != null ? data.atTime(LocalTime.MAX) : null;
-        List<Agendamento> lista = agendamentoRepository.findComFiltros(tatuadorId, clienteId, status, dataInicio, dataFim);
-        return lista.stream().map(AgendamentoResponseDTO::fromEntity).toList();
     }
 
     @Transactional(readOnly = true)

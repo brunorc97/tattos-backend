@@ -2,12 +2,9 @@ package com.tattos.service;
 
 import com.tattos.model.Agendamento;
 import com.tattos.model.Insumo;
-import com.tattos.model.Usuario;
 import com.tattos.model.enums.StatusAgendamento;
-import com.tattos.model.enums.UserRole;
 import com.tattos.repository.AgendamentoRepository;
 import com.tattos.repository.InsumoRepository;
-import com.tattos.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -24,7 +21,7 @@ public class NotificacaoSchedulerService {
 
     private final AgendamentoRepository agendamentoRepository;
     private final InsumoRepository insumoRepository;
-    private final UsuarioRepository usuarioRepository;
+    private final org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     /**
      * Rotina executada de hora em hora para verificar agendamentos nas próximas 24h
@@ -47,7 +44,7 @@ public class NotificacaoSchedulerService {
 
         int totalEnviados = 0;
         for (Agendamento agendamento : agendamentos) {
-            enviarLembreteCliente(agendamento);
+            eventPublisher.publishEvent(new com.tattos.event.LembreteAgendamentoEvent(agendamento.getId()));
             agendamento.setLembreteEnviado(true);
             agendamentoRepository.save(agendamento);
             totalEnviados++;
@@ -73,30 +70,11 @@ public class NotificacaoSchedulerService {
             return 0;
         }
 
-        List<Usuario> gestores = usuarioRepository.findByRole(UserRole.ROLE_GESTOR);
-
         for (Insumo insumo : insumosCriticos) {
-            enviarAlertaEstoqueParaGestores(insumo, gestores);
+            eventPublisher.publishEvent(new com.tattos.event.EstoqueCriticoEvent(insumo.getId()));
         }
 
         log.warn("Alerta de estoque crítico executado: {} insumos requerem reposição imediata.", insumosCriticos.size());
         return insumosCriticos.size();
-    }
-
-    private void enviarLembreteCliente(Agendamento agendamento) {
-        String emailCliente = agendamento.getCliente() != null ? agendamento.getCliente().getEmail() : "N/A";
-        String nomeCliente = agendamento.getCliente() != null ? agendamento.getCliente().getNome() : "Cliente";
-        String nomeTatuador = agendamento.getTatuador() != null ? agendamento.getTatuador().getNome() : "Tatuador";
-
-        log.info("[LEMBRETE 24H] Enviado para {} ({}) sobre agendamento #{} com {} em {}.",
-                nomeCliente, emailCliente, agendamento.getId(), nomeTatuador, agendamento.getDataHora());
-    }
-
-    private void enviarAlertaEstoqueParaGestores(Insumo insumo, List<Usuario> gestores) {
-        for (Usuario gestor : gestores) {
-            log.warn("[ALERTA ESTOQUE CRÍTICO] Gestor: {} ({}) | Insumo: '{}' (ID: {}, Código: {}) | Qtd Atual: {} {} | Nível Crítico: {}",
-                    gestor.getNome(), gestor.getEmail(), insumo.getNome(), insumo.getId(), insumo.getCodigo(),
-                    insumo.getQuantidadeAtual(), insumo.getUnidadeMedida(), insumo.getNivelCritico());
-        }
     }
 }

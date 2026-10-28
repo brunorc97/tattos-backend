@@ -39,7 +39,7 @@ public class ProjetoService {
     @Transactional
     public ProjetoResponseDTO aprovarProjeto(Long id) {
         Projeto projeto = projetoRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Projeto não encontrado"));
+                .orElseThrow(() -> new com.tattos.exception.ResourceNotFoundException("Projeto não encontrado com ID: " + id));
         projeto.setAprovado(true);
         Projeto saved = projetoRepository.save(projeto);
         return mapToResponse(saved);

@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * DTO usado para solicitar a geração do código PIX do sinal com base em um percentual
@@ -18,8 +19,8 @@ import lombok.NoArgsConstructor;
 @Builder
 public class PixSinalRequestDTO {
 
-    @NotNull(message = "O percentual do sinal é obrigatório")
-    @Min(value = 10, message = "O percentual mínimo permitido é 10")
-    @Max(value = 50, message = "O percentual máximo permitido é 50")
-    private Integer percentual;
+    @NotNull(message = "{validation.sinal.percentual.required}")
+    @Min(value = 10, message = "{validation.sinal.percentual.min}")
+    @Max(value = 50, message = "{validation.sinal.percentual.max}")
+        @Schema(example = "30")private Integer percentual;
 }

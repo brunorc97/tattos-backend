@@ -30,28 +30,15 @@ import java.util.Map;
 @Tag(name = "Financeiro", description = "Transações financeiras, balanço mensal e repasses de comissão")
 @SecurityRequirement(name = "bearerAuth")
 @RestController
-@RequestMapping({"/api/financeiro", "/api/financial"})
+@RequestMapping({"/api/v1/financeiro", "/api/v1/financial", "/api/financeiro", "/api/financial"})
 @RequiredArgsConstructor
 public class TransacaoController {
 
     private final TransacaoService transacaoService;
 
-    @Operation(summary = "Listar transações", description = "Filtra transações por tipo, tatuador, status e período.")
-    @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso")
-    @GetMapping({"/transacoes", "/transactions"})
-    @PreAuthorize("hasAnyRole('GESTOR','TATUADOR')")
-    public ResponseEntity<List<TransacaoResponseDTO>> listar(
-            @RequestParam(required = false) TipoTransacao tipo,
-            @RequestParam(required = false) Long tatuadorId,
-            @RequestParam(required = false) StatusTransacao status,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fim) {
-        return ResponseEntity.ok(transacaoService.listar(tipo, tatuadorId, status, inicio, fim));
-    }
-
-    @Operation(summary = "Listar transações com paginação", description = "Filtra transações paginadas por tipo, tatuador, status e período.")
+    @Operation(summary = "Listar transações", description = "Filtra transações paginadas (Page) por tipo, tatuador, status e período. Suporta page, size e sort.")
     @ApiResponse(responseCode = "200", description = "Página retornada com sucesso")
-    @GetMapping({"/transacoes/paginado", "/transactions/paged"})
+    @GetMapping({"/transacoes", "/transactions", "/transacoes/paginado", "/transactions/paged"})
     @PreAuthorize("hasAnyRole('GESTOR','TATUADOR')")
     public ResponseEntity<Page<TransacaoResponseDTO>> listarPaginado(
             @RequestParam(required = false) TipoTransacao tipo,

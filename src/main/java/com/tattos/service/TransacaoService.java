@@ -186,13 +186,6 @@ public class TransacaoService {
     }
 
     @Transactional(readOnly = true)
-    public List<TransacaoResponseDTO> listar(TipoTransacao tipo, Long tatuadorId, StatusTransacao status, LocalDate inicio, LocalDate fim) {
-        return transacaoRepository.findComFiltros(tipo, tatuadorId, status, inicio, fim).stream()
-                .map(TransacaoResponseDTO::fromEntity)
-                .toList();
-    }
-
-    @Transactional(readOnly = true)
     public Page<TransacaoResponseDTO> listarPaginado(TipoTransacao tipo, Long tatuadorId, StatusTransacao status, LocalDate inicio, LocalDate fim, Pageable pageable) {
         return transacaoRepository.findComFiltrosPaginado(tipo, tatuadorId, status, inicio, fim, pageable)
                 .map(TransacaoResponseDTO::fromEntity);

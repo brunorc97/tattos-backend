@@ -35,9 +35,10 @@ server:
       max: 200
       min-spare: 10
 
-jwt:
-  secret: ${JWT_SECRET}
-  expiration: ${JWT_EXPIRATION:86400000}
+app:
+  security:
+    jwt-secret: ${JWT_SECRET}
+    jwt-expiration: ${JWT_EXPIRATION:86400000}
 
 logging:
   config: classpath:logback-spring.xml
@@ -46,7 +47,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info,metrics,prometheus
       base-path: /actuator
 
   endpoint:

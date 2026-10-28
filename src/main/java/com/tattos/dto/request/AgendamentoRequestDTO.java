@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @Data
 @NoArgsConstructor
@@ -18,30 +19,32 @@ import java.time.LocalDateTime;
 @Builder
 public class AgendamentoRequestDTO {
 
-    @NotNull(message = "O ID do cliente é obrigatório")
-    private Long clienteId;
+    @NotNull(message = "{validation.cliente.id.required}")
+        @Schema(example = "1")private Long clienteId;
 
-    @NotNull(message = "O ID do tatuador é obrigatório")
-    private Long tatuadorId;
+    @NotNull(message = "{validation.tatuador.id.required}")
+        @Schema(example = "2")private Long tatuadorId;
 
-    @NotNull(message = "A data e horário do agendamento são obrigatórios")
-    @FutureOrPresent(message = "A data e hora do agendamento não podem ser no passado")
+    @NotNull(message = "{validation.agendamento.data.required}")
+    @FutureOrPresent(message = "{validation.future}")
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm[:ss]")
-    private LocalDateTime dataHora;
+        @Schema(example = "2026-11-15T14:00:00")private LocalDateTime dataHora;
 
     @Builder.Default
-    private Integer duracaoMinutos = 60;
+        @Schema(example = "120")private Integer duracaoMinutos = 60;
 
-    @NotBlank(message = "A cabine é obrigatória")
-    private String cabine;
+    @NotBlank(message = "{validation.cabine.required}")
+        @Schema(example = "A1")private String cabine;
 
-    @NotNull(message = "O valor do procedimento é obrigatório")
-    private BigDecimal valor;
+    @NotNull(message = "{validation.procedimento.valor.required}")
+        @Schema(example = "1500.00")private BigDecimal valor;
 
     @Builder.Default
-    private BigDecimal valorSinal = BigDecimal.ZERO;
+        @Schema(example = "300.00")private BigDecimal valorSinal = BigDecimal.ZERO;
 
-    private String codigoIndicacao;
+    
+    @Schema(example = "ABC123")private String codigoIndicacao;
 
-    private String observacoes;
+    
+    @Schema(example = "Cliente prefere música ambiente")private String observacoes;
 }

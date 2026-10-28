@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @Data
 @NoArgsConstructor
@@ -14,7 +15,7 @@ import java.time.LocalDateTime;
 @Builder
 public class FichaAnamneseResponseDTO {
 
-    private Long id;
+    @Schema(example = "1")private Long id;
     private Long clienteId;
     private String clienteNome;
     private String clienteCpf;

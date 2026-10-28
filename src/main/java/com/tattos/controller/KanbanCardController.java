@@ -18,7 +18,7 @@ import java.util.List;
 @Tag(name = "Kanban", description = "Kanban board for budgets and projects")
 @SecurityRequirement(name = "bearerAuth")
 @RestController
-@RequestMapping({"/api/kanban", "/api/kanban-cards"})
+@RequestMapping({"/api/v1/kanban", "/api/v1/kanban-cards", "/api/kanban", "/api/kanban-cards"})
 @RequiredArgsConstructor
 public class KanbanCardController {
 

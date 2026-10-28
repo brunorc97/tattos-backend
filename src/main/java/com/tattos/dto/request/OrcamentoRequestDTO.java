@@ -10,6 +10,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @Data
 @NoArgsConstructor
@@ -17,13 +18,14 @@ import java.math.BigDecimal;
 @Builder
 public class OrcamentoRequestDTO {
 
-    @NotBlank(message = "O nome do orçamento é obrigatório")
-    @Size(min = 2, max = 255, message = "O nome do orçamento deve ter entre 2 e 255 caracteres")
-    private String nome;
+    @NotBlank(message = "{validation.orcamento.nome.required}")
+    @Size(min = 2, max = 255, message = "{validation.orcamento.nome.size}")
+        @Schema(example = "Fechamento de braço - realismo")private String nome;
 
-    @NotNull(message = "O valor do orçamento é obrigatório")
-    @DecimalMin(value = "0.01", message = "O valor do orçamento deve ser maior que zero")
-    private BigDecimal valor;
+    @NotNull(message = "{validation.valor.required}")
+    @DecimalMin(value = "0.01", message = "{validation.positive}")
+        @Schema(example = "3500.00")private BigDecimal valor;
 
-    private Long projetoId;
+    
+    @Schema(example = "3")private Long projetoId;
 }

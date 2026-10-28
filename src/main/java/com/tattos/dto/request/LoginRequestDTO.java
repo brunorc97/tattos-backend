@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @Data
 @NoArgsConstructor
@@ -12,11 +13,13 @@ import lombok.NoArgsConstructor;
 @Builder
 public class LoginRequestDTO {
 
-    private String email;
-    private String username;
+    
+    @Schema(example = "gestor@tattos.com")private String email;
+        @Schema(example = "gestor@tattos.com")private String username;
 
-    private String senha;
-    private String password;
+    
+    @Schema(example = "senha123")private String senha;
+        @Schema(example = "senha123")private String password;
 
     public String getLoginIdentifier() {
         if (email != null && !email.trim().isEmpty()) {

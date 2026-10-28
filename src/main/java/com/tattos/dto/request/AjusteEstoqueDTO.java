@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @Data
 @NoArgsConstructor
@@ -13,9 +14,10 @@ import lombok.NoArgsConstructor;
 @Builder
 public class AjusteEstoqueDTO {
 
-    @NotNull(message = "A quantidade é obrigatória")
-    @Min(value = 1, message = "A quantidade deve ser de no mínimo 1")
-    private Integer quantidade;
+    @NotNull(message = "{validation.quantidade.required}")
+    @Min(value = 1, message = "{validation.quantidade.min}")
+        @Schema(example = "10")private Integer quantidade;
 
-    private String motivo;
+    
+    @Schema(example = "Reposição semanal")private String motivo;
 }

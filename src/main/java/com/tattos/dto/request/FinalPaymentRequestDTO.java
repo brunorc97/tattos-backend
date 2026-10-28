@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * DTO para finalizar o pagamento do agendamento, permitindo incluir um valor de cobrança adicional.
@@ -17,7 +18,7 @@ import java.math.BigDecimal;
 @Builder
 public class FinalPaymentRequestDTO {
 
-    @NotNull(message = "O valor da cobrança adicional é obrigatório")
-    @DecimalMin(value = "0.0", inclusive = true, message = "O valor não pode ser negativo")
-    private BigDecimal valorCobrancaAdicional;
+    @NotNull(message = "{validation.pagamento.valor.required}")
+    @DecimalMin(value = "0.0", inclusive = true, message = "{validation.valor.nonnegative}")
+        @Schema(example = "50.00")private BigDecimal valorCobrancaAdicional;
 }

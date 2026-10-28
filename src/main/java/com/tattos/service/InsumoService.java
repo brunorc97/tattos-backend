@@ -110,19 +110,6 @@ public class InsumoService {
     }
 
     @Transactional(readOnly = true)
-    public List<InsumoResponseDTO> listar(String categoria, String query) {
-        List<Insumo> lista;
-        if (categoria != null && !categoria.trim().isEmpty()) {
-            lista = insumoRepository.findByCategoriaIgnoreCase(categoria.trim());
-        } else if (query != null && !query.trim().isEmpty()) {
-            lista = insumoRepository.findByNomeContainingIgnoreCase(query.trim());
-        } else {
-            lista = insumoRepository.findAll();
-        }
-        return lista.stream().map(InsumoResponseDTO::fromEntity).toList();
-    }
-
-    @Transactional(readOnly = true)
     public Page<InsumoResponseDTO> listarPaginado(String categoria, String query, Pageable pageable) {
         Page<Insumo> page;
         if (categoria != null && !categoria.trim().isEmpty()) {

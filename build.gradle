@@ -43,12 +43,13 @@ dependencies {
 	implementation 'com.google.http-client:google-http-client-jackson2:1.44.2'
 	implementation 'com.google.apis:google-api-services-calendar:v3-rev20260925-2.0.0'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
 
 	// MySQL
 	runtimeOnly 'com.mysql:mysql-connector-j'
 
 	// OpenAPI / Swagger UI
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.2.0'
 
 	// Structured JSON logging (Logstash encoder)
 	implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
@@ -60,6 +61,12 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-validation-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('bootJar') {
+	layered {
+		enabled = true
+	}
 }
 
 tasks.named('test') {

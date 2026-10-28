@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @Data
 @NoArgsConstructor
@@ -19,29 +20,34 @@ import java.time.LocalDate;
 @Builder
 public class TransacaoRequestDTO {
 
-    @NotBlank(message = "A descrição é obrigatória")
-    private String descricao;
+    @NotBlank(message = "{validation.descricao.required}")
+        @Schema(example = "Sessão 2 - fechamento de braço")private String descricao;
 
-    @NotNull(message = "O valor é obrigatório")
-    @DecimalMin(value = "0.01", message = "O valor deve ser maior que zero")
-    private BigDecimal valor;
+    @NotNull(message = "{validation.valor.required}")
+    @DecimalMin(value = "0.01", message = "{validation.positive}")
+        @Schema(example = "1500.00")private BigDecimal valor;
 
-    @NotNull(message = "O tipo da transação é obrigatório")
-    private TipoTransacao tipo;
+    @NotNull(message = "{validation.transacao.tipo.required}")
+        @Schema(example = "RECEITA")private TipoTransacao tipo;
 
-    @NotNull(message = "A data é obrigatória")
-    private LocalDate data;
+    @NotNull(message = "{validation.data.required}")
+        @Schema(example = "2026-10-28")private LocalDate data;
 
     @Builder.Default
-    private StatusTransacao status = StatusTransacao.CONCLUIDO;
+        @Schema(example = "CONCLUIDO")private StatusTransacao status = StatusTransacao.CONCLUIDO;
 
-    private Long tatuadorId;
+    
+    @Schema(example = "2")private Long tatuadorId;
 
-    private String categoria;
+    
+    @Schema(example = "Procedimento Tattoo")private String categoria;
 
-    private String formaPagamento;
+    
+    @Schema(example = "PIX")private String formaPagamento;
 
-    private BigDecimal comissaoPercentual;
+    
+    @Schema(example = "60.00")private BigDecimal comissaoPercentual;
 
-    private Long agendamentoId;
+    
+    @Schema(example = "10")private Long agendamentoId;
 }
