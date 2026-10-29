@@ -39,6 +39,7 @@ public class UsuarioController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('GESTOR','TATUADOR')")
     public ResponseEntity<List<UsuarioResponseDTO>> listarUsuarios(
             @RequestParam(required = false) UserRole role) {
         List<UsuarioResponseDTO> usuarios = (role != null ? usuarioRepository.findByRole(role) : usuarioRepository.findAll())
@@ -58,6 +59,7 @@ public class UsuarioController {
     }
 
     @GetMapping("/clientes")
+    @PreAuthorize("hasAnyRole('GESTOR','TATUADOR')")
     public ResponseEntity<List<UsuarioResponseDTO>> listarClientes() {
         List<UsuarioResponseDTO> clientes = usuarioRepository.findClientesAtivos()
                 .stream()
@@ -67,6 +69,7 @@ public class UsuarioController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('GESTOR','TATUADOR')")
     public ResponseEntity<UsuarioResponseDTO> buscarPorId(@PathVariable Long id) {
         return usuarioRepository.findById(id)
                 .map(UsuarioResponseDTO::fromEntity)

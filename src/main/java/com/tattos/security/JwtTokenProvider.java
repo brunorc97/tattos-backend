@@ -19,6 +19,9 @@ import java.util.stream.Collectors;
 @Component
 public class JwtTokenProvider {
 
+    private static final long GOOGLE_CALENDAR_STATE_TTL_MS = 5 * 60 * 1000L;
+    private static final String GOOGLE_CALENDAR_STATE_PURPOSE = "google-calendar-oauth";
+
     private final SecretKey key;
     private final long expirationTime;
 
@@ -72,6 +75,36 @@ public class JwtTokenProvider {
                 .expiration(expiryDate)
                 .signWith(key)
                 .compact();
+    }
+
+    public String generateGoogleCalendarState(Long usuarioId) {
+        Date now = new Date();
+        return Jwts.builder()
+                .subject(GOOGLE_CALENDAR_STATE_PURPOSE)
+                .claim("purpose", GOOGLE_CALENDAR_STATE_PURPOSE)
+                .claim("userId", usuarioId)
+                .issuedAt(now)
+                .expiration(new Date(now.getTime() + GOOGLE_CALENDAR_STATE_TTL_MS))
+                .signWith(key)
+                .compact();
+    }
+
+    public Long getGoogleCalendarUserIdFromState(String state) {
+        Claims claims = Jwts.parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(state)
+                .getPayload();
+
+        if (!GOOGLE_CALENDAR_STATE_PURPOSE.equals(claims.get("purpose", String.class))) {
+            throw new JwtException("Invalid Google Calendar OAuth state");
+        }
+
+        Object userId = claims.get("userId");
+        if (userId instanceof Number number) {
+            return number.longValue();
+        }
+        throw new JwtException("Invalid Google Calendar OAuth state");
     }
 
     public String getUsernameFromToken(String token) {

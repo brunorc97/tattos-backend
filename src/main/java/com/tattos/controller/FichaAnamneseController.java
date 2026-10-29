@@ -3,6 +3,7 @@ package com.tattos.controller;
 import com.tattos.dto.request.FichaAnamneseRequestDTO;
 import com.tattos.dto.response.FichaAnamneseResponseDTO;
 import com.tattos.dto.request.AssinaturaRequestDTO;
+import com.tattos.model.Usuario;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -13,10 +14,12 @@ import com.tattos.service.FichaAnamneseService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Tag(name = "Fichas de Anamnese", description = "Biossegurança: registro e consulta de fichas clínicas de clientes")
 @SecurityRequirement(name = "bearerAuth")
@@ -48,15 +51,26 @@ public class FichaAnamneseController {
     @ApiResponse(responseCode = "404", description = "Ficha não encontrada")
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('GESTOR','TATUADOR','CLIENTE')")
-    public ResponseEntity<FichaAnamneseResponseDTO> buscarPorId(@PathVariable Long id) {
-        return ResponseEntity.ok(fichaService.buscarPorId(id));
+    public ResponseEntity<FichaAnamneseResponseDTO> buscarPorId(
+            @PathVariable Long id,
+            @AuthenticationPrincipal Usuario usuario) {
+        FichaAnamneseResponseDTO ficha = fichaService.buscarPorId(id);
+        if (isOtherClientRecord(usuario, ficha.getClienteId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        return ResponseEntity.ok(ficha);
     }
 
     @Operation(summary = "Buscar fichas por cliente")
     @ApiResponse(responseCode = "200", description = "Fichas do cliente retornadas")
     @GetMapping("/cliente/{clienteId}")
     @PreAuthorize("hasAnyRole('GESTOR','TATUADOR','CLIENTE')")
-    public ResponseEntity<List<FichaAnamneseResponseDTO>> buscarPorCliente(@PathVariable Long clienteId) {
+    public ResponseEntity<List<FichaAnamneseResponseDTO>> buscarPorCliente(
+            @PathVariable Long clienteId,
+            @AuthenticationPrincipal Usuario usuario) {
+        if (isOtherClientRecord(usuario, clienteId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         return ResponseEntity.ok(fichaService.buscarPorCliente(clienteId));
     }
 
@@ -90,8 +104,25 @@ public class FichaAnamneseController {
     @ApiResponse(responseCode = "204", description = "Assinatura registrada com sucesso")
     @PostMapping("/{id}/assinatura")
     @PreAuthorize("hasAnyRole('GESTOR','TATUADOR','CLIENTE')")
-    public ResponseEntity<Void> assinarTermo(@PathVariable Long id, @Valid @RequestBody AssinaturaRequestDTO dto) {
+    public ResponseEntity<Void> assinarTermo(
+            @PathVariable Long id,
+            @Valid @RequestBody AssinaturaRequestDTO dto,
+            @AuthenticationPrincipal Usuario usuario) {
+        if (usuario != null && usuario.isCliente()) {
+            FichaAnamneseResponseDTO ficha = fichaService.buscarPorId(id);
+            if (isOtherClientRecord(usuario, ficha.getClienteId())
+                    || !usuario.getEmail().equalsIgnoreCase(dto.getEmail())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+            dto.setUsuarioId(usuario.getId());
+        }
         fichaService.assinarTermo(id, dto);
         return ResponseEntity.noContent().build();
+    }
+
+    private boolean isOtherClientRecord(Usuario usuario, Long clienteId) {
+        return usuario != null
+                && usuario.isCliente()
+                && !Objects.equals(usuario.getId(), clienteId);
     }
 }

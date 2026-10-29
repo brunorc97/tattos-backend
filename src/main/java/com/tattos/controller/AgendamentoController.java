@@ -6,6 +6,8 @@ import com.tattos.dto.response.AgendamentoResponseDTO;
 import com.tattos.dto.request.PixSinalRequestDTO;
 import com.tattos.dto.response.PixSinalResponseDTO;
 import com.tattos.dto.request.FinalPaymentRequestDTO;
+import com.tattos.dto.response.AgendamentoResponseDTO;
+import com.tattos.model.Usuario;
 import com.tattos.model.enums.StatusAgendamento;
 import com.tattos.service.AgendamentoService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,10 +24,12 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 
 @Tag(name = "Agendamentos", description = "Gestão de sessões de tatuagem e agendamentos")
 @SecurityRequirement(name = "bearerAuth")
@@ -46,7 +50,11 @@ public class AgendamentoController {
             @Parameter(description = "Filtrar por status")         @RequestParam(required = false) StatusAgendamento status,
             @Parameter(description = "Filtrar por data (ISO)")     @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data,
-            @PageableDefault(size = 20, sort = "dataHora") Pageable pageable) {
+            @PageableDefault(size = 20, sort = "dataHora") Pageable pageable,
+            @AuthenticationPrincipal Usuario usuario) {
+        if (usuario != null && usuario.isCliente()) {
+            clienteId = usuario.getId();
+        }
         return ResponseEntity.ok(agendamentoService.listarPaginado(tatuadorId, clienteId, status, data, pageable));
     }
 
@@ -55,8 +63,14 @@ public class AgendamentoController {
     @ApiResponse(responseCode = "404", description = "Agendamento não encontrado")
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('GESTOR','TATUADOR','CLIENTE')")
-    public ResponseEntity<AgendamentoResponseDTO> buscarPorId(@PathVariable Long id) {
-        return ResponseEntity.ok(agendamentoService.buscarPorId(id));
+    public ResponseEntity<AgendamentoResponseDTO> buscarPorId(
+            @PathVariable Long id,
+            @AuthenticationPrincipal Usuario usuario) {
+        AgendamentoResponseDTO agendamento = agendamentoService.buscarPorId(id);
+        if (isOtherClientAppointment(usuario, agendamento.getClienteId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        return ResponseEntity.ok(agendamento);
     }
 
     @Operation(summary = "Criar agendamento")
@@ -65,7 +79,12 @@ public class AgendamentoController {
     @ApiResponse(responseCode = "409", description = "Conflito de horário")
     @PostMapping
     @PreAuthorize("hasAnyRole('GESTOR','TATUADOR','CLIENTE')")
-    public ResponseEntity<AgendamentoResponseDTO> criar(@Valid @RequestBody AgendamentoRequestDTO dto) {
+    public ResponseEntity<AgendamentoResponseDTO> criar(
+            @Valid @RequestBody AgendamentoRequestDTO dto,
+            @AuthenticationPrincipal Usuario usuario) {
+        if (usuario != null && usuario.isCliente()) {
+            dto.setClienteId(usuario.getId());
+        }
         return ResponseEntity.status(HttpStatus.CREATED).body(agendamentoService.criar(dto));
     }
 
@@ -93,7 +112,16 @@ public class AgendamentoController {
     @ApiResponse(responseCode = "200", description = "PIX gerado com sucesso")
     @PostMapping("/{id}/pix")
     @PreAuthorize("hasAnyRole('GESTOR','TATUADOR','CLIENTE')")
-    public ResponseEntity<PixSinalResponseDTO> gerarPix(@PathVariable Long id, @Valid @RequestBody PixSinalRequestDTO request) {
+    public ResponseEntity<PixSinalResponseDTO> gerarPix(
+            @PathVariable Long id,
+            @Valid @RequestBody PixSinalRequestDTO request,
+            @AuthenticationPrincipal Usuario usuario) {
+        if (usuario != null && usuario.isCliente()) {
+            AgendamentoResponseDTO agendamento = agendamentoService.buscarPorId(id);
+            if (isOtherClientAppointment(usuario, agendamento.getClienteId())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        }
         PixSinalResponseDTO response = agendamentoService.gerarPixSinal(id, request);
         return ResponseEntity.ok(response);
     }
@@ -101,7 +129,7 @@ public class AgendamentoController {
     @Operation(summary = "Marcar sinal como pago")
     @ApiResponse(responseCode = "200", description = "Sinal marcado como pago")
     @PatchMapping("/{id}/sinal-pago")
-    @PreAuthorize("hasAnyRole('GESTOR','TATUADOR','CLIENTE')")
+    @PreAuthorize("hasAnyRole('GESTOR','TATUADOR')")
     public ResponseEntity<Void> marcarSinalPago(@PathVariable Long id) {
         agendamentoService.marcarSinalPago(id);
         return ResponseEntity.ok().build();
@@ -110,7 +138,7 @@ public class AgendamentoController {
     @Operation(summary = "Finalizar pagamento com cobrança adicional")
     @ApiResponse(responseCode = "200", description = "Pagamento finalizado")
     @PatchMapping("/{id}/finalizar-pagamento")
-    @PreAuthorize("hasAnyRole('GESTOR','TATUADOR','CLIENTE')")
+    @PreAuthorize("hasAnyRole('GESTOR','TATUADOR')")
     public ResponseEntity<Void> finalizarPagamento(@PathVariable Long id, @Valid @RequestBody FinalPaymentRequestDTO request) {
         agendamentoService.finalizarPagamento(id, request);
         return ResponseEntity.ok().build();
@@ -123,5 +151,11 @@ public class AgendamentoController {
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
         agendamentoService.deletar(id);
         return ResponseEntity.noContent().build();
+    }
+
+    private boolean isOtherClientAppointment(Usuario usuario, Long clienteId) {
+        return usuario != null
+                && usuario.isCliente()
+                && !Objects.equals(usuario.getId(), clienteId);
     }
 }

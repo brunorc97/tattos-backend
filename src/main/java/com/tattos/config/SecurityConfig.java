@@ -55,7 +55,8 @@ public class SecurityConfig {
                 .requestMatchers("/error").permitAll()
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
-                .requestMatchers("/api/google-calendar/**", "/api/v1/google-calendar/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/google-calendar/callback", "/api/v1/google-calendar/callback").permitAll()
+                .requestMatchers("/api/google-calendar/**", "/api/v1/google-calendar/**").authenticated()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                 // Módulo Financeiro e Comissões
@@ -104,10 +105,10 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("http://localhost:3000", "http://localhost:5173", "https://tattos-frontend.example.com"));
+        configuration.setAllowedOriginPatterns(List.of("http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:5173", "https://tattos-frontend.example.com"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"));
-        configuration.setExposedHeaders(List.of("Authorization"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With", "X-Correlation-ID"));
+        configuration.setExposedHeaders(List.of("Authorization", "X-Correlation-ID"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
 

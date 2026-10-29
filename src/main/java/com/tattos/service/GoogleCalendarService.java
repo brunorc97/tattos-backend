@@ -8,6 +8,7 @@ import com.tattos.config.GoogleOAuthConfig;
 import com.tattos.model.GoogleAccount;
 import com.tattos.model.Usuario;
 import com.tattos.repository.GoogleAccountRepository;
+import com.tattos.security.JwtTokenProvider;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ public class GoogleCalendarService {
 
     private final GoogleOAuthConfig googleOAuthConfig;
     private final GoogleAccountRepository googleAccountRepository;
+    private final JwtTokenProvider jwtTokenProvider;
 
     private GoogleAuthorizationCodeFlow flow;
 
@@ -30,13 +32,13 @@ public class GoogleCalendarService {
     }
 
     /**
-     * Generates the Google OAuth consent URL for the given user.
+     * Generates the Google OAuth consent URL with signed, user-bound state.
      */
     public String getAuthorizationUrl(Long usuarioId) throws IOException {
         String redirectUri = "http://localhost:8080/api/google-calendar/callback"; // adjust as needed
         return flow.newAuthorizationUrl()
                 .setRedirectUri(redirectUri)
-                .setState(usuarioId.toString())
+                .setState(jwtTokenProvider.generateGoogleCalendarState(usuarioId))
                 .build();
     }
 

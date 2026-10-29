@@ -70,6 +70,7 @@ public class AgendamentoResponseDTO {
                 .valorCobrancaAdicional(a.getValorCobrancaAdicional())
                 .pagamentoCompleto(a.isPagamentoCompleto())
                 .dataPagamento(a.getDataPagamento())
+                .clienteId(a.getCliente() != null ? a.getCliente().getId() : null)
                 .clienteNome(a.getCliente() != null ? a.getCliente().getNome() : null)
                 .clienteTelefone(a.getCliente() != null ? a.getCliente().getTelefone() : null)
                 .clienteEmail(a.getCliente() != null ? a.getCliente().getEmail() : null)
