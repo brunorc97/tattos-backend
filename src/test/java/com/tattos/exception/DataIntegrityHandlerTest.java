@@ -63,4 +63,16 @@ class DataIntegrityHandlerTest {
 
         assertThat(response.getStatusCode().value()).isEqualTo(409);
     }
+
+    @Test
+    @DisplayName("Upload acima do limite deve retornar 413 com mensagem amigável")
+    void uploadMuitoGrandeRetorna413() {
+        org.springframework.web.multipart.MaxUploadSizeExceededException ex =
+                new org.springframework.web.multipart.MaxUploadSizeExceededException(10_485_760);
+
+        ResponseEntity<ErrorResponseDTO> response = handler.handleMaxUploadSize(ex, request);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(413);
+        assertThat(response.getBody().getMessage()).isEqualTo("O arquivo excede o limite de 10 MB.");
+    }
 }

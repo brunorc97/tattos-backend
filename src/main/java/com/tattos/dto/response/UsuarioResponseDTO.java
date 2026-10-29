@@ -28,6 +28,11 @@ public class UsuarioResponseDTO {
     private String cargo;
     private BigDecimal comissaoPercentual;
     private String codigoIndicacao;
+    private java.time.LocalDate dataNascimento;
+    private String pixChave;
+    private String banco;
+    private String agencia;
+    private String conta;
     private boolean ativo;
     private LocalDateTime createdAt;
 
@@ -45,6 +50,11 @@ public class UsuarioResponseDTO {
                 .cargo(u.getCargo())
                 .comissaoPercentual(u.getComissaoPercentual())
                 .codigoIndicacao(u.getCodigoIndicacao())
+                .dataNascimento(u.getDataNascimento())
+                .pixChave(u.getPixChave())
+                .banco(u.getBanco())
+                .agencia(u.getAgencia())
+                .conta(u.getConta())
                 .ativo(u.isAtivo())
                 .createdAt(u.getCreatedAt())
                 .build();

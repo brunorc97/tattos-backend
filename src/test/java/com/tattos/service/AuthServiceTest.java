@@ -36,6 +36,23 @@ class AuthServiceTest {
     }
 
     @Test
+    @DisplayName("Deve registrar cliente com data de nascimento e retorná-la no DTO")
+    void deveRegistrarClienteComDataNascimento() {
+        RegisterRequestDTO request = RegisterRequestDTO.builder()
+                .nome("Cliente Nascimento")
+                .email("nascimento@tattos.com")
+                .senha("segredo123")
+                .role(UserRole.ROLE_CLIENTE)
+                .dataNascimento(java.time.LocalDate.of(1990, 5, 17))
+                .build();
+
+        UsuarioResponseDTO response = authService.register(request);
+
+        assertNotNull(response.getId());
+        assertEquals(java.time.LocalDate.of(1990, 5, 17), response.getDataNascimento());
+    }
+
+    @Test
     @DisplayName("Deve registrar um tatuador com perfil e dados específicos com sucesso")
     void deveRegistrarTatuadorComSucesso() {
         RegisterRequestDTO request = RegisterRequestDTO.builder()

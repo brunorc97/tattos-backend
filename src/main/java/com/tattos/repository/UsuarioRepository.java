@@ -4,6 +4,7 @@ import com.tattos.model.Usuario;
 import com.tattos.model.enums.UserRole;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -29,4 +30,23 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
     @Query("SELECT u FROM Usuario u WHERE u.role = com.tattos.model.enums.UserRole.ROLE_CLIENTE AND u.ativo = true")
     List<Usuario> findClientesAtivos();
+
+    @Query("SELECT u FROM Usuario u WHERE u.role = com.tattos.model.enums.UserRole.ROLE_CLIENTE AND u.ativo = true")
+    org.springframework.data.domain.Page<Usuario> findClientesAtivos(org.springframework.data.domain.Pageable pageable);
+
+    @Query("""
+            SELECT u FROM Usuario u
+            WHERE u.role = com.tattos.model.enums.UserRole.ROLE_CLIENTE
+              AND u.ativo = true
+              AND (:query IS NOT NULL
+                   AND (LOWER(u.nome) LIKE LOWER(CONCAT('%', :query, '%'))
+                        OR LOWER(u.email) LIKE LOWER(CONCAT('%', :query, '%'))
+                        OR (:queryDigits IS NOT NULL
+                            AND REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(u.telefone, '(', ''), ')', ''), '-', ''), ' ', ''), '.', '')
+                               LIKE CONCAT('%', :queryDigits, '%'))))
+            """)
+    org.springframework.data.domain.Page<Usuario> buscarClientes(
+            @Param("query") String query,
+            @Param("queryDigits") String queryDigits,
+            org.springframework.data.domain.Pageable pageable);
 }

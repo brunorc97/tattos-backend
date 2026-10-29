@@ -78,6 +78,22 @@ public class Usuario implements UserDetails {
     @Column(name = "codigo_indicacao", length = 20, unique = true)
     private String codigoIndicacao;
 
+    @Column(name = "data_nascimento")
+    private java.time.LocalDate dataNascimento;
+
+    // Dados bancários (pagamento de comissões a tatuadores)
+    @Column(name = "pix_chave", length = 140)
+    private String pixChave;
+
+    @Column(length = 60)
+    private String banco;
+
+    @Column(length = 20)
+    private String agencia;
+
+    @Column(length = 30)
+    private String conta;
+
     @Builder.Default
     @Column(nullable = false)
     private boolean ativo = true;

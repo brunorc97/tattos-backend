@@ -87,6 +87,7 @@ public class AuthService {
         usuario.setNome(nome);
         usuario.setEmail(email);
         usuario.setSenha(passwordEncoder.encode(rawSenha));
+        usuario.setDataNascimento(request.getDataNascimento());
         usuario.setTelefone(request.getResolvedTelefone());
         usuario.setEndereco(request.getResolvedEndereco());
         usuario.setAtivo(true);

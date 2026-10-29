@@ -60,12 +60,17 @@ public class UsuarioController {
 
     @GetMapping("/clientes")
     @PreAuthorize("hasAnyRole('GESTOR','TATUADOR')")
-    public ResponseEntity<List<UsuarioResponseDTO>> listarClientes() {
-        List<UsuarioResponseDTO> clientes = usuarioRepository.findClientesAtivos()
-                .stream()
-                .map(UsuarioResponseDTO::fromEntity)
-                .toList();
-        return ResponseEntity.ok(clientes);
+    public ResponseEntity<org.springframework.data.domain.Page<UsuarioResponseDTO>> listarClientes(
+            @RequestParam(required = false) String query,
+            @org.springframework.data.web.PageableDefault(size = 20, sort = "nome") org.springframework.data.domain.Pageable pageable) {
+        String q = (query != null && !query.isBlank()) ? query.trim() : null;
+        String digits = q != null && q.matches(".*\\d.*") ? q.replaceAll("\\D", "") : null;
+        if (q == null) {
+            return ResponseEntity.ok(usuarioRepository.findClientesAtivos(pageable)
+                    .map(UsuarioResponseDTO::fromEntity));
+        }
+        return ResponseEntity.ok(usuarioRepository.buscarClientes(q, digits, pageable)
+                .map(UsuarioResponseDTO::fromEntity));
     }
 
     @GetMapping("/{id}")

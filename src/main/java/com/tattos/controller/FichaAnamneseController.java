@@ -30,12 +30,32 @@ public class FichaAnamneseController {
 
     private final FichaAnamneseService fichaService;
 
-    @Operation(summary = "Listar todas as fichas")
+    @Operation(summary = "Criar ficha de anamnese", description = "Gestor/tatuador criam para qualquer cliente; cliente cria apenas para si (clienteId do token).")
+    @ApiResponse(responseCode = "201", description = "Ficha criada")
+    @ApiResponse(responseCode = "400", description = "Dados inválidos")
+    @ApiResponse(responseCode = "404", description = "Cliente não encontrado")
+    @PostMapping
+    @PreAuthorize("hasAnyRole('GESTOR','TATUADOR','CLIENTE')")
+    public ResponseEntity<FichaAnamneseResponseDTO> criar(
+            @Valid @RequestBody FichaAnamneseRequestDTO dto,
+            @AuthenticationPrincipal Usuario usuario) {
+        if (usuario != null && usuario.isCliente()) {
+            dto.setClienteId(usuario.getId());
+        }
+        return ResponseEntity.status(HttpStatus.CREATED).body(fichaService.criar(dto));
+    }
+
+    @Operation(summary = "Listar fichas", description = "Gestor filtra por cliente/tatuador/mês/ano; tatuador vê apenas fichas dos seus clientes.")
     @ApiResponse(responseCode = "200", description = "Fichas retornadas")
     @GetMapping
     @PreAuthorize("hasAnyRole('GESTOR','TATUADOR')")
-    public ResponseEntity<List<FichaAnamneseResponseDTO>> listarTodas() {
-        return ResponseEntity.ok(fichaService.listarTodas());
+    public ResponseEntity<List<FichaAnamneseResponseDTO>> listarTodas(
+            @RequestParam(required = false) Long clienteId,
+            @RequestParam(required = false) Long tatuadorId,
+            @RequestParam(required = false) Integer mes,
+            @RequestParam(required = false) Integer ano,
+            @AuthenticationPrincipal Usuario usuario) {
+        return ResponseEntity.ok(fichaService.listarComFiltros(clienteId, tatuadorId, mes, ano, usuario));
     }
 
     @Operation(summary = "Alertas clínicos", description = "Retorna fichas com restrições ou condições clínicas impeditivas.")

@@ -130,6 +130,20 @@ public class FichaAnamneseService {
                 .toList();
     }
 
+    /**
+     * Lista fichas com regras por role: GESTOR filtra livremente; TATUADOR vê
+     * apenas fichas de clientes com agendamento com ele (tatuadorId forçado ao
+     * próprio, parâmetro alheio ignorado).
+     */
+    @Transactional(readOnly = true)
+    public List<FichaAnamneseResponseDTO> listarComFiltros(Long clienteId, Long tatuadorId,
+                                                           Integer mes, Integer ano, Usuario logado) {
+        Long tatuadorEfetivo = (logado != null && logado.isTatuador()) ? logado.getId() : tatuadorId;
+        return fichaRepository.buscarComFiltros(clienteId, tatuadorEfetivo, mes, ano).stream()
+                .map(FichaAnamneseResponseDTO::fromEntity)
+                .toList();
+    }
+
     @Transactional(readOnly = true)
     public boolean validarAptidaoCliente(Long clienteId) {
         List<FichaAnamnese> fichas = fichaRepository.findByClienteId(clienteId);

@@ -54,6 +54,8 @@ public class RegisterRequestDTO {
     
     @Schema(example = "60.00")private BigDecimal comissaoPercentual;
 
+    @Schema(example = "1990-05-17")private java.time.LocalDate dataNascimento;
+
     public String getResolvedNome() {
         if (nome != null && !nome.trim().isEmpty()) return nome.trim();
         if (name != null && !name.trim().isEmpty()) return name.trim();
