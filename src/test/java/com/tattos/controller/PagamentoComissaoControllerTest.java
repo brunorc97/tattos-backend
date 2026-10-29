@@ -137,4 +137,71 @@ class PagamentoComissaoControllerTest {
         mockMvc.perform(get("/api/v1/financeiro/pagamentos-comissao/99999/recibo.pdf"))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    @DisplayName("Recibo PDF é gerado com itens e totais")
+    @WithMockUser(roles = "GESTOR")
+    void reciboPdfGerado() throws Exception {
+        mockMvc.perform(post("/api/v1/financeiro/pagamentos-comissao")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"tatuadorId\": " + tatuador.getId()
+                                + ", \"transacaoIds\": [" + t1 + "], \"formaPagamento\": \"PIX\"}"))
+                .andExpect(status().isCreated());
+        Long pagamentoId = pagamentoRepository.findAll().get(0).getId();
+
+        var result = mockMvc.perform(get("/api/v1/financeiro/pagamentos-comissao/" + pagamentoId + "/recibo.pdf"))
+                .andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .content().contentType("application/pdf"))
+                .andReturn();
+
+        org.assertj.core.api.Assertions.assertThat(result.getResponse().getContentAsByteArray())
+                .startsWith("%PDF".getBytes());
+    }
+
+    @Test
+    @DisplayName("Tatuador não baixa recibo de pagamento de outro (403)")
+    void reciboDeOutroTatuador() throws Exception {
+        Tatuador outro = (Tatuador) usuarioRepository.save(Tatuador.builder()
+                .nome("Outro").email("recibo.o@tattos.com").senha("h")
+                .comissaoPercentual(new BigDecimal("60")).ativo(true).build());
+
+        mockMvc.perform(post("/api/v1/financeiro/pagamentos-comissao")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"tatuadorId\": " + tatuador.getId()
+                                + ", \"transacaoIds\": [" + t1 + "], \"formaPagamento\": \"PIX\"}")
+                        .with(org.springframework.security.test.web.servlet.request
+                                .SecurityMockMvcRequestPostProcessors.user("gestor@x.com").roles("GESTOR")))
+                .andExpect(status().isCreated());
+        Long pagamentoId = pagamentoRepository.findAll().get(0).getId();
+
+        String token = "Bearer " + jwtTokenProvider.generateTokenForUser(outro);
+        mockMvc.perform(get("/api/v1/financeiro/pagamentos-comissao/" + pagamentoId + "/recibo.pdf")
+                        .header("Authorization", token))
+                .andExpect(status().isForbidden());
+    }
+
+    @Autowired
+    private com.tattos.security.JwtTokenProvider jwtTokenProvider;
+
+    @Test
+    @DisplayName("Tatuador vê apenas os próprios repasses, pagamentos e adiantamentos em aberto")
+    void meusRepassesEscopoProprio() throws Exception {
+        Tatuador outro = (Tatuador) usuarioRepository.save(Tatuador.builder()
+                .nome("Outro R").email("meusrepasses.o@tattos.com").senha("h")
+                .comissaoPercentual(new BigDecimal("70")).ativo(true).build());
+        transacaoRepository.save(TransacaoFinanceira.builder()
+                .descricao("Do outro").valor(new BigDecimal("9999.00"))
+                .tipo(TipoTransacao.RECEITA).data(LocalDate.now())
+                .tatuador(outro).build());
+
+        String token = "Bearer " + jwtTokenProvider.generateTokenForUser(tatuador);
+        mockMvc.perform(get("/api/v1/financeiro/meus-repasses")
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.trabalhos.content.length()").value(2))
+                .andExpect(jsonPath("$.trabalhos.content[0].tatuadorId").value(tatuador.getId()))
+                .andExpect(jsonPath("$.adiantamentosEmAberto").value(0.0))
+                .andExpect(jsonPath("$.pagamentos").isArray());
+    }
 }

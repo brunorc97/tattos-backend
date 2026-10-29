@@ -37,6 +37,18 @@ public interface TransacaoFinanceiraRepository extends JpaRepository<TransacaoFi
            "AND t.data BETWEEN :inicio AND :fim")
     BigDecimal sumDespesasByPeriodo(@Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim);
 
+    @Query("SELECT t FROM TransacaoFinanceira t WHERE t.tipo = com.tattos.model.enums.TipoTransacao.RECEITA "
+            + "AND t.tatuador.id = :tatuadorId "
+            + "AND (:statusRepasse IS NULL OR t.statusRepasse = :statusRepasse) "
+            + "AND (:inicio IS NULL OR t.data >= :inicio) AND (:fim IS NULL OR t.data <= :fim)")
+    org.springframework.data.domain.Page<TransacaoFinanceira> findTrabalhosParaRepasse(
+            @Param("tatuadorId") Long tatuadorId,
+            @Param("statusRepasse") com.tattos.model.enums.StatusRepasse statusRepasse,
+            @Param("inicio") java.time.LocalDate inicio,
+            @Param("fim") java.time.LocalDate fim,
+            org.springframework.data.domain.Pageable pageable);
+
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT t FROM TransacaoFinanceira t WHERE t.tipo = com.tattos.model.enums.TipoTransacao.ADIANTAMENTO "
             + "AND t.tatuador.id = :tatuadorId AND t.abatido < t.valor ORDER BY t.data ASC, t.id ASC")
     java.util.List<TransacaoFinanceira> findAdiantamentosEmAbertoList(@Param("tatuadorId") Long tatuadorId);
