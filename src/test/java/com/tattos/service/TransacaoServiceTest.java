@@ -157,6 +157,38 @@ class TransacaoServiceTest {
     }
 
     @Test
+    @DisplayName("Transação automática sem taxa explícita tem valorLiquido preenchido via PrePersist")
+    void transacaoAutomaticaTemLiquido() {
+        // simula o caminho do listener (sem taxaOperadora): salva direto pelo repository
+        var t = transacaoRepository.save(com.tattos.model.TransacaoFinanceira.builder()
+                .descricao("Sinal automático")
+                .valor(new BigDecimal("300.00"))
+                .tipo(TipoTransacao.RECEITA)
+                .data(LocalDate.now())
+                .tatuador(tatuador)
+                .categoria("Sinal Reserva")
+                .build());
+
+        assertEquals(new BigDecimal("300.00"), t.getValorLiquido());
+    }
+
+    @Test
+    @DisplayName("Taxa desativada não pode ser usada em nova transação")
+    void taxaInativaRejeitada() {
+        var taxa = taxaOperadoraRepository.save(com.tattos.model.TaxaOperadora.builder()
+                .operadora("Velha").modalidade(com.tattos.model.enums.ModalidadePagamento.DEBITO)
+                .taxaPercentual(new BigDecimal("2.50")).ativo(false).build());
+
+        assertThrows(com.tattos.exception.BusinessException.class, () -> transacaoService.criar(TransacaoRequestDTO.builder()
+                .descricao("Com taxa inativa")
+                .valor(new BigDecimal("100.00"))
+                .tipo(TipoTransacao.RECEITA)
+                .data(LocalDate.now())
+                .taxaOperadoraId(taxa.getId())
+                .build()));
+    }
+
+    @Test
     @DisplayName("Deve gerar o balanço gerencial 'Smile Now, Cry Later' com faturamento, despesas, repasses e lucro líquido")
     void deveCalcularBalancoMensalSmileNowCryLater() {
         LocalDate hoje = LocalDate.now();
