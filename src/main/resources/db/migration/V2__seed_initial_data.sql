@@ -1,6 +1,11 @@
 -- Seed inicial do ambiente de desenvolvimento. As verificacoes de existencia
 -- permitem aplicar esta carga tambem em bancos baselineados que ja tenham dados.
 
+-- DDL previo ao seed: codigo de indicao (exclusivo de clientes) precisa
+-- existir antes do INSERT abaixo. A V3 mantem guards para bancos legados.
+ALTER TABLE usuarios
+    ADD COLUMN codigo_indicacao VARCHAR(20) UNIQUE;
+
 INSERT INTO usuarios (nome, email, senha, role, telefone, endereco, especialidade, bio, cargo, comissao_percentual, ativo, codigo_indicacao)
 SELECT seed.nome, seed.email, seed.senha, seed.role, seed.telefone, seed.endereco, seed.especialidade, seed.bio,
        seed.cargo, seed.comissao_percentual, TRUE, seed.codigo_indicacao
