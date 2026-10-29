@@ -55,6 +55,20 @@ public class KanbanCardService {
                 .collect(Collectors.toList());
     }
 
+    private static final java.util.Set<String> STATUS_FINAIS = java.util.Set.of("CONCLUIDO", "DONE", "FINALIZADO");
+
+    /** Atrasado = projeto com prazo vencido e card fora de status final. Calculado na leitura. */
+    private boolean isAtrasado(KanbanCard card) {
+        var projeto = card.getProjeto();
+        if (projeto == null || projeto.getPrazo() == null) {
+            return false;
+        }
+        if (STATUS_FINAIS.contains(card.getStatus() != null ? card.getStatus().trim().toUpperCase() : "")) {
+            return false;
+        }
+        return projeto.getPrazo().isBefore(java.time.LocalDate.now());
+    }
+
     private KanbanCardResponseDTO mapToResponse(KanbanCard card) {
         KanbanCardResponseDTO dto = new KanbanCardResponseDTO();
         dto.setId(card.getId());
@@ -67,6 +81,7 @@ public class KanbanCardService {
         }
         if (card.getProjeto() != null) {
             dto.setProjetoId(card.getProjeto().getId());
+            dto.setAtrasado(isAtrasado(card));
         }
         return dto;
     }

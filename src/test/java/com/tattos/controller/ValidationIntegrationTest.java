@@ -27,6 +27,16 @@ class ValidationIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    private com.tattos.repository.UsuarioRepository usuarioRepository;
+
+    private Long seedCliente() {
+        return usuarioRepository.findByEmail("valid.projeto@tattos.com")
+                .map(com.tattos.model.Usuario::getId)
+                .orElseGet(() -> usuarioRepository.save(com.tattos.model.Cliente.builder()
+                        .nome("Cli Validação").email("valid.projeto@tattos.com").senha("h").ativo(true).build()).getId());
+    }
+
     // ─── Orçamento ──────────────────────────────────────────────────────────────
 
     @Test
@@ -111,9 +121,10 @@ class ValidationIntegrationTest {
     @DisplayName("POST /api/projetos com dados válidos deve retornar 201")
     @WithMockUser(roles = "GESTOR")
     void postProjetoValido() throws Exception {
+        Long clienteId = seedCliente();
         String payload = """
-                {"nome": "Projeto Capa de Costas", "descricao": "Arte japonesa tradicional"}
-                """;
+                {"nome": "Projeto Capa de Costas", "descricao": "Arte japonesa tradicional", "clienteId": %d}
+                """.formatted(clienteId);
 
         mockMvc.perform(post("/api/projetos")
                         .contentType(MediaType.APPLICATION_JSON)

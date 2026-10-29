@@ -6,5 +6,16 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ProjetoRepository extends JpaRepository<Projeto, Long> {
-    // Additional custom queries if needed
+
+    @org.springframework.data.jpa.repository.Query("""
+            SELECT p FROM Projeto p
+            WHERE (:tatuadorId IS NULL OR p.tatuador.id = :tatuadorId)
+              AND (:status IS NULL OR p.statusAprovacao = :status)
+              AND (:clienteId IS NULL OR p.cliente.id = :clienteId)
+            ORDER BY p.dataCriacao DESC
+            """)
+    java.util.List<Projeto> buscarComFiltros(
+            @org.springframework.data.repository.query.Param("tatuadorId") Long tatuadorId,
+            @org.springframework.data.repository.query.Param("status") com.tattos.model.enums.StatusAprovacaoProjeto status,
+            @org.springframework.data.repository.query.Param("clienteId") Long clienteId);
 }

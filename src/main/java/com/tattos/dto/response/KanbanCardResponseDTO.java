@@ -12,4 +12,5 @@ public class KanbanCardResponseDTO {
     private Integer ordem;
     private Long orcamentoId;
     private Long projetoId;
+    private Boolean atrasado;
 }

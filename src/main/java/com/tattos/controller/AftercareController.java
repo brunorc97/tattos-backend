@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
+@org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('GESTOR','TATUADOR')")
 @RequestMapping({"/api/v1/aftercare", "/api/aftercare"})
 @RequiredArgsConstructor
 public class AftercareController {

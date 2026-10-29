@@ -45,11 +45,19 @@ class OrcamentoProjetoKanbanServiceTest {
     @Autowired
     private KanbanCardRepository kanbanCardRepository;
 
+    @Autowired
+    private com.tattos.repository.UsuarioRepository usuarioRepository;
+
+    private Long clienteId;
+
     @BeforeEach
     void setUp() {
         kanbanCardRepository.deleteAll();
         orcamentoRepository.deleteAll();
         projetoRepository.deleteAll();
+        usuarioRepository.deleteAll();
+        clienteId = usuarioRepository.save(com.tattos.model.Cliente.builder()
+                .nome("Cli Kanban").email("kanban.cli@tattos.com").senha("h").ativo(true).build()).getId();
     }
 
     // ─── Projeto ────────────────────────────────────────────────────────────────
@@ -58,6 +66,7 @@ class OrcamentoProjetoKanbanServiceTest {
     @DisplayName("Deve criar projeto com campos corretos")
     void deveCriarProjeto() {
         ProjetoRequestDTO dto = ProjetoRequestDTO.builder()
+                .clienteId(clienteId)
                 .nome("Projeto Capa de Costas")
                 .descricao("Arte japonesa full back")
                 .aprovado(false)
@@ -75,6 +84,7 @@ class OrcamentoProjetoKanbanServiceTest {
     @DisplayName("Deve criar projeto não aprovado por padrão quando aprovado é null")
     void deveCriarProjetoNaoAprovadoPorPadrao() {
         ProjetoRequestDTO dto = ProjetoRequestDTO.builder()
+                .clienteId(clienteId)
                 .nome("Projeto Manga")
                 .descricao("Sleeve completo")
                 .build(); // aprovado = null
@@ -88,6 +98,7 @@ class OrcamentoProjetoKanbanServiceTest {
     @DisplayName("Deve aprovar projeto existente")
     void deveAprovarProjeto() {
         ProjetoRequestDTO dto = ProjetoRequestDTO.builder()
+                .clienteId(clienteId)
                 .nome("Projeto Flash Day")
                 .build();
 
@@ -108,8 +119,8 @@ class OrcamentoProjetoKanbanServiceTest {
     @Test
     @DisplayName("Deve listar todos os projetos criados")
     void deveListarTodosOsProjetos() {
-        projetoService.criarProjeto(ProjetoRequestDTO.builder().nome("Projeto A").build());
-        projetoService.criarProjeto(ProjetoRequestDTO.builder().nome("Projeto B").build());
+        projetoService.criarProjeto(ProjetoRequestDTO.builder().nome("Projeto A").clienteId(clienteId).build());
+        projetoService.criarProjeto(ProjetoRequestDTO.builder().nome("Projeto B").clienteId(clienteId).build());
 
         List<ProjetoResponseDTO> lista = projetoService.listarProjetos();
 
@@ -138,7 +149,7 @@ class OrcamentoProjetoKanbanServiceTest {
     @DisplayName("Deve criar orçamento vinculado a um projeto existente")
     void deveCriarOrcamentoVinculadoAProjeto() {
         ProjetoResponseDTO projeto = projetoService.criarProjeto(
-                ProjetoRequestDTO.builder().nome("Projeto Sleeve").build());
+                ProjetoRequestDTO.builder().nome("Projeto Sleeve").clienteId(clienteId).build());
 
         OrcamentoRequestDTO dto = OrcamentoRequestDTO.builder()
                 .nome("Orçamento Sleeve Completo")
@@ -205,7 +216,7 @@ class OrcamentoProjetoKanbanServiceTest {
     @DisplayName("Deve criar kanban card vinculado a orçamento e projeto")
     void deveCriarKanbanCardComVinculos() {
         ProjetoResponseDTO projeto = projetoService.criarProjeto(
-                ProjetoRequestDTO.builder().nome("Projeto Costas").build());
+                ProjetoRequestDTO.builder().nome("Projeto Costas").clienteId(clienteId).build());
 
         OrcamentoResponseDTO orcamento = orcamentoService.criarOrcamento(
                 OrcamentoRequestDTO.builder()

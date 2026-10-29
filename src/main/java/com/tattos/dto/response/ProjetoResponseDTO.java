@@ -9,5 +9,17 @@ public class ProjetoResponseDTO {
     private String nome;
     private String descricao;
     private boolean aprovado;
+    private Long clienteId;
+    private Long tatuadorId;
+    private java.time.LocalDate prazo;
+    private String statusAprovacao;
+    private String motivoRecusa;
+    private String motivoRecusaDetalhe;
+    private boolean necessitaSinal;
+    private java.math.BigDecimal valorSinal;
+    private boolean sinalPago;
+    private String formaPagamentoSinal;
+    private java.time.LocalDateTime dataPagamentoSinal;
+    private Long comprovanteSinalId;
     private java.time.LocalDateTime dataCriacao;
 }

@@ -23,4 +23,11 @@ public class ProjetoRequestDTO {
 
     
     @Schema(example = "false")private Boolean aprovado;
+
+    @jakarta.validation.constraints.NotNull(message = "{validation.cliente.id.required}")
+    @Schema(example = "1")private Long clienteId;
+
+    @Schema(example = "2")private Long tatuadorId;
+
+    @Schema(example = "2027-01-15")private java.time.LocalDate prazo;
 }

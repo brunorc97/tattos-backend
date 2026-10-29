@@ -24,11 +24,15 @@ public class ProjetoController {
 
     private final ProjetoService projetoService;
 
-    @Operation(summary = "Listar projetos")
+    @Operation(summary = "Listar projetos", description = "Tatuador vê os seus; cliente os dele; gestor filtra por tatuador, status de aprovação e cliente.")
     @GetMapping
     @PreAuthorize("hasAnyRole('GESTOR','TATUADOR','CLIENTE')")
-    public ResponseEntity<List<ProjetoResponseDTO>> listar() {
-        return ResponseEntity.ok(projetoService.listarProjetos());
+    public ResponseEntity<List<ProjetoResponseDTO>> listar(
+            @RequestParam(required = false) Long tatuadorId,
+            @RequestParam(required = false) String statusAprovacao,
+            @RequestParam(required = false) Long clienteId,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.tattos.model.Usuario usuario) {
+        return ResponseEntity.ok(projetoService.listarComEscopo(tatuadorId, statusAprovacao, clienteId, usuario));
     }
 
     @Operation(summary = "Criar projeto")
@@ -39,7 +43,41 @@ public class ProjetoController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    @Operation(summary = "Aprovar projeto")
+    public record ComprovanteRequest(@jakarta.validation.constraints.NotNull Long arquivoId) {}
+    public record ConfirmarSinalRequest(@jakarta.validation.constraints.NotBlank String formaPagamento) {}
+
+    @Operation(summary = "Anexar comprovante do sinal", description = "Cliente dono do projeto anexa o PDF do comprovante de pagamento do sinal.")
+    @PostMapping("/{id}/sinal/comprovante")
+    @PreAuthorize("hasAnyRole('GESTOR','TATUADOR','CLIENTE')")
+    public ResponseEntity<ProjetoResponseDTO> anexarComprovante(
+            @PathVariable Long id,
+            @Valid @RequestBody ComprovanteRequest body,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.tattos.model.Usuario usuario) {
+        return ResponseEntity.ok(projetoService.anexarComprovanteSinal(id, body.arquivoId(), usuario));
+    }
+
+    @Operation(summary = "Confirmar sinal pago", description = "Gestor/tatuador dá entrada do sinal após conferir o comprovante.")
+    @PostMapping("/{id}/sinal/confirmar")
+    @PreAuthorize("hasAnyRole('GESTOR','TATUADOR')")
+    public ResponseEntity<ProjetoResponseDTO> confirmarSinal(
+            @PathVariable Long id,
+            @Valid @RequestBody ConfirmarSinalRequest body) {
+        return ResponseEntity.ok(projetoService.confirmarSinal(id, body.formaPagamento()));
+    }
+
+    @Operation(summary = "Decidir aprovação do projeto", description = "Aprova ou recusa com motivo obrigatório na recusa.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Decisão registrada")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Recusa sem motivo")
+    @PostMapping("/{id}/decisao")
+    @PreAuthorize("hasAnyRole('GESTOR','TATUADOR')")
+    public ResponseEntity<ProjetoResponseDTO> decidir(
+            @PathVariable Long id,
+            @Valid @RequestBody com.tattos.dto.request.AprovacaoProjetoRequestDTO dto) {
+        return ResponseEntity.ok(projetoService.decidir(id, dto));
+    }
+
+    @Operation(summary = "Aprovar projeto (legado)", description = "Deprecated: use POST /{id}/decisao.")
+    @Deprecated
     @PostMapping("/{id}/aprovar")
     @PreAuthorize("hasRole('GESTOR')")
     public ResponseEntity<ProjetoResponseDTO> aprovar(@PathVariable Long id) {
