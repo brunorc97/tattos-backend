@@ -26,7 +26,7 @@ public class KanbanCardController {
 
     @Operation(summary = "Listar cartões Kanban")
     @GetMapping
-    @PreAuthorize("hasAnyRole('GESTOR','TATUADOR','CLIENTE')")
+    @PreAuthorize("hasAnyRole('GESTOR','TATUADOR')")
     public ResponseEntity<List<KanbanCardResponseDTO>> listar() {
         return ResponseEntity.ok(kanbanCardService.listarKanbanCards());
     }

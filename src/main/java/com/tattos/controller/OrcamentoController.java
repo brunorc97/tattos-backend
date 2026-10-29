@@ -26,7 +26,7 @@ public class OrcamentoController {
 
     @Operation(summary = "Listar orçamentos")
     @GetMapping
-    @PreAuthorize("hasAnyRole('GESTOR','TATUADOR','CLIENTE')")
+    @PreAuthorize("hasAnyRole('GESTOR','TATUADOR')")
     public ResponseEntity<List<OrcamentoResponseDTO>> listar() {
         return ResponseEntity.ok(orcamentoService.listarOrcamentos());
     }

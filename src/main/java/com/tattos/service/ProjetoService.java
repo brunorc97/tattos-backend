@@ -72,9 +72,11 @@ public class ProjetoService {
     }
 
     @Transactional
-    public ProjetoResponseDTO decidir(Long id, com.tattos.dto.request.AprovacaoProjetoRequestDTO dto) {
+    public ProjetoResponseDTO decidir(Long id, com.tattos.dto.request.AprovacaoProjetoRequestDTO dto,
+                                      com.tattos.model.Usuario logado) {
         Projeto projeto = projetoRepository.findById(id)
                 .orElseThrow(() -> new com.tattos.exception.ResourceNotFoundException("Projeto não encontrado com ID: " + id));
+        validarEscopoTatuador(projeto, logado);
 
         if (Boolean.TRUE.equals(dto.getAprovado())) {
             projeto.setStatusAprovacao(com.tattos.model.enums.StatusAprovacaoProjeto.APROVADO);
@@ -110,6 +112,10 @@ public class ProjetoService {
         }
         com.tattos.model.Arquivo arquivo = arquivoRepository.findById(arquivoId)
                 .orElseThrow(() -> new com.tattos.exception.ResourceNotFoundException("Arquivo não encontrado com ID: " + arquivoId));
+        if (logado != null && logado.isCliente()
+                && arquivo.getDono() != null && !arquivo.getDono().getId().equals(logado.getId())) {
+            throw new org.springframework.security.access.AccessDeniedException("O arquivo não pertence a você.");
+        }
         if (!"application/pdf".equals(arquivo.getContentType())) {
             throw new com.tattos.exception.BusinessException("O comprovante deve ser um PDF.");
         }
@@ -117,10 +123,37 @@ public class ProjetoService {
         return mapToResponse(projetoRepository.save(projeto));
     }
 
+    /** Gestor/tatuador configura o sinal do projeto (necessidade + valor, com teto no orçamento vinculado). */
     @Transactional
-    public ProjetoResponseDTO confirmarSinal(Long id, String formaPagamento) {
+    public ProjetoResponseDTO configurarSinal(Long id, boolean necessitaSinal, java.math.BigDecimal valorSinal) {
         Projeto projeto = projetoRepository.findById(id)
                 .orElseThrow(() -> new com.tattos.exception.ResourceNotFoundException("Projeto não encontrado com ID: " + id));
+        if (necessitaSinal) {
+            if (valorSinal == null || valorSinal.compareTo(java.math.BigDecimal.ZERO) <= 0) {
+                throw new com.tattos.exception.BusinessException("Informe o valor do sinal maior que zero.");
+            }
+            // teto: maior orçamento vinculado ao projeto
+            java.math.BigDecimal maiorOrcamento = projeto.getOrcamentos() == null ? null
+                    : projeto.getOrcamentos().stream()
+                            .map(com.tattos.model.Orcamento::getValor)
+                            .filter(java.util.Objects::nonNull)
+                            .max(java.math.BigDecimal::compareTo)
+                            .orElse(null);
+            if (maiorOrcamento != null && valorSinal.compareTo(maiorOrcamento) > 0) {
+                throw new com.tattos.exception.BusinessException(
+                        "O valor do sinal não pode ser maior que o valor do orçamento vinculado.");
+            }
+        }
+        projeto.setNecessitaSinal(necessitaSinal);
+        projeto.setValorSinal(necessitaSinal ? valorSinal : null);
+        return mapToResponse(projetoRepository.save(projeto));
+    }
+
+    @Transactional
+    public ProjetoResponseDTO confirmarSinal(Long id, String formaPagamento, com.tattos.model.Usuario logado) {
+        Projeto projeto = projetoRepository.findById(id)
+                .orElseThrow(() -> new com.tattos.exception.ResourceNotFoundException("Projeto não encontrado com ID: " + id));
+        validarEscopoTatuador(projeto, logado);
         if (!projeto.isNecessitaSinal() || projeto.getValorSinal() == null) {
             throw new com.tattos.exception.BusinessException("O projeto não possui sinal configurado.");
         }
@@ -128,6 +161,16 @@ public class ProjetoService {
         projeto.setFormaPagamentoSinal(formaPagamento);
         projeto.setDataPagamentoSinal(java.time.LocalDateTime.now());
         return mapToResponse(projetoRepository.save(projeto));
+    }
+
+    /** Tatuador só decide/confirma sinal de projetos alocados a ele; gestor, qualquer um. */
+    private void validarEscopoTatuador(Projeto projeto, com.tattos.model.Usuario logado) {
+        if (logado != null && logado.isTatuador()
+                && projeto.getTatuador() != null
+                && !projeto.getTatuador().getId().equals(logado.getId())) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "Este projeto está alocado a outro tatuador.");
+        }
     }
 
     private ProjetoResponseDTO mapToResponse(Projeto projeto) {

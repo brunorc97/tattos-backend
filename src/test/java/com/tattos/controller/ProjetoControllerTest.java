@@ -222,6 +222,71 @@ class ProjetoControllerTest {
                 .andExpect(jsonPath("$.formaPagamentoSinal").value("PIX"));
     }
 
+    // ─── Fixes do review (escopo e sinal) ───────────────────────────────────
+
+    @Test
+    @DisplayName("Gestor configura sinal com teto no orçamento vinculado")
+    @WithMockUser(roles = "GESTOR")
+    void configurarSinalComTeto() throws Exception {
+        var c = novoCliente("proj.teto@tattos.com");
+        Projeto p = projetoRepository.save(Projeto.builder().nome("Com teto").cliente(c).build());
+
+        // sem orçamento vinculado: valor livre
+        mockMvc.perform(post("/api/v1/projetos/" + p.getId() + "/sinal")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"necessitaSinal\": true, \"valorSinal\": 250.00}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.necessitaSinal").value(true))
+                .andExpect(jsonPath("$.valorSinal").value(250.00));
+    }
+
+    @Test
+    @DisplayName("Confirmar sinal sem configurar antes retorna 400")
+    @WithMockUser(roles = "GESTOR")
+    void confirmarSemConfigurar() throws Exception {
+        var c = novoCliente("proj.teto2@tattos.com");
+        Projeto p = projetoRepository.save(Projeto.builder().nome("Sem config").cliente(c).build());
+
+        mockMvc.perform(post("/api/v1/projetos/" + p.getId() + "/sinal/confirmar")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"formaPagamento\": \"PIX\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("Tatuador não decide projeto alocado a outro tatuador")
+    void tatuadorNaoDecideProjetoAlheio() throws Exception {
+        var c = novoCliente("proj.escopo@tattos.com");
+        var tatA = novoTatuador("proj.escopo.a@tattos.com");
+        var tatB = novoTatuador("proj.escopo.b@tattos.com");
+        Projeto p = projetoRepository.save(Projeto.builder().nome("Do A").cliente(c).tatuador(tatA).build());
+
+        String token = "Bearer " + jwtTokenProvider.generateTokenForUser(tatB);
+        mockMvc.perform(post("/api/v1/projetos/" + p.getId() + "/decisao")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"aprovado\": true}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("Cliente não lista orçamentos (403)")
+    void clienteNaoListaOrcamentos() throws Exception {
+        var c = novoCliente("proj.orc@tattos.com");
+        String token = "Bearer " + jwtTokenProvider.generateTokenForUser(c);
+        mockMvc.perform(get("/api/v1/orcamentos").header("Authorization", token))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("Cliente não lista kanban (403)")
+    void clienteNaoListaKanban() throws Exception {
+        var c = novoCliente("proj.kanban@tattos.com");
+        String token = "Bearer " + jwtTokenProvider.generateTokenForUser(c);
+        mockMvc.perform(get("/api/v1/kanban").header("Authorization", token))
+                .andExpect(status().isForbidden());
+    }
+
     // ─── Decisão com motivo (Task 2) ─────────────────────────────────────────
 
     @Test

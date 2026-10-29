@@ -45,6 +45,17 @@ public class ProjetoController {
 
     public record ComprovanteRequest(@jakarta.validation.constraints.NotNull Long arquivoId) {}
     public record ConfirmarSinalRequest(@jakarta.validation.constraints.NotBlank String formaPagamento) {}
+    public record ConfigurarSinalRequest(boolean necessitaSinal, java.math.BigDecimal valorSinal) {}
+
+    @Operation(summary = "Configurar sinal do projeto", description = "Define se o projeto necessita de sinal e o valor (teto: maior orçamento vinculado).")
+    @PostMapping("/{id}/sinal")
+    @PreAuthorize("hasAnyRole('GESTOR','TATUADOR')")
+    public ResponseEntity<ProjetoResponseDTO> configurarSinal(
+            @PathVariable Long id,
+            @RequestBody ConfigurarSinalRequest body,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.tattos.model.Usuario usuario) {
+        return ResponseEntity.ok(projetoService.configurarSinal(id, body.necessitaSinal(), body.valorSinal()));
+    }
 
     @Operation(summary = "Anexar comprovante do sinal", description = "Cliente dono do projeto anexa o PDF do comprovante de pagamento do sinal.")
     @PostMapping("/{id}/sinal/comprovante")
@@ -61,8 +72,9 @@ public class ProjetoController {
     @PreAuthorize("hasAnyRole('GESTOR','TATUADOR')")
     public ResponseEntity<ProjetoResponseDTO> confirmarSinal(
             @PathVariable Long id,
-            @Valid @RequestBody ConfirmarSinalRequest body) {
-        return ResponseEntity.ok(projetoService.confirmarSinal(id, body.formaPagamento()));
+            @Valid @RequestBody ConfirmarSinalRequest body,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.tattos.model.Usuario usuario) {
+        return ResponseEntity.ok(projetoService.confirmarSinal(id, body.formaPagamento(), usuario));
     }
 
     @Operation(summary = "Decidir aprovação do projeto", description = "Aprova ou recusa com motivo obrigatório na recusa.")
@@ -72,8 +84,9 @@ public class ProjetoController {
     @PreAuthorize("hasAnyRole('GESTOR','TATUADOR')")
     public ResponseEntity<ProjetoResponseDTO> decidir(
             @PathVariable Long id,
-            @Valid @RequestBody com.tattos.dto.request.AprovacaoProjetoRequestDTO dto) {
-        return ResponseEntity.ok(projetoService.decidir(id, dto));
+            @Valid @RequestBody com.tattos.dto.request.AprovacaoProjetoRequestDTO dto,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.tattos.model.Usuario usuario) {
+        return ResponseEntity.ok(projetoService.decidir(id, dto, usuario));
     }
 
     @Operation(summary = "Aprovar projeto (legado)", description = "Deprecated: use POST /{id}/decisao.")
