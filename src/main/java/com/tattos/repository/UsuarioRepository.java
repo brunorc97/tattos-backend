@@ -38,6 +38,25 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     @Query("SELECT u FROM Usuario u WHERE u.role = com.tattos.model.enums.UserRole.ROLE_CLIENTE AND u.ativo = true")
     org.springframework.data.domain.Page<Usuario> findClientesAtivos(org.springframework.data.domain.Pageable pageable);
 
+    /** Clientes ativos com pelo menos um agendamento com o tatuador informado. */
+    @Query("""
+            SELECT u FROM Usuario u
+            WHERE u.role = com.tattos.model.enums.UserRole.ROLE_CLIENTE
+              AND u.ativo = true
+              AND EXISTS (SELECT a FROM Agendamento a WHERE a.cliente.id = u.id AND a.tatuador.id = :tatuadorId)
+              AND (:query IS NULL
+                   OR LOWER(u.nome) LIKE LOWER(CONCAT('%', :query, '%'))
+                   OR LOWER(u.email) LIKE LOWER(CONCAT('%', :query, '%'))
+                   OR (:queryDigits IS NOT NULL
+                       AND REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(u.telefone, '(', ''), ')', ''), '-', ''), ' ', ''), '.', '')
+                          LIKE CONCAT('%', :queryDigits, '%')))
+            """)
+    org.springframework.data.domain.Page<Usuario> buscarClientesDoTatuador(
+            @Param("tatuadorId") Long tatuadorId,
+            @Param("query") String query,
+            @Param("queryDigits") String queryDigits,
+            org.springframework.data.domain.Pageable pageable);
+
     @Query("""
             SELECT u FROM Usuario u
             WHERE u.role = com.tattos.model.enums.UserRole.ROLE_CLIENTE

@@ -12,6 +12,8 @@ public interface FichaAnamneseRepository extends JpaRepository<FichaAnamnese, Lo
 
     List<FichaAnamnese> findByClienteId(Long clienteId);
 
+    List<FichaAnamnese> findByClienteIdOrderByDataCriacaoDesc(Long clienteId);
+
     Optional<FichaAnamnese> findByAgendamentoId(Long agendamentoId);
 
     List<FichaAnamnese> findByAlertaClinicoTrue();

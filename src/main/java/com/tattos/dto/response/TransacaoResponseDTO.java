@@ -29,6 +29,10 @@ public class TransacaoResponseDTO {
     private String tatuadorNome;
     private String categoria;
     private String formaPagamento;
+    private Long taxaOperadoraId;
+    private String taxaOperadoraNome;
+    private java.math.BigDecimal taxaValor;
+    private java.math.BigDecimal valorLiquido;
     private BigDecimal comissaoPercentual;
     private BigDecimal valorRepasse;
     private Long agendamentoId;
@@ -48,6 +52,10 @@ public class TransacaoResponseDTO {
                 .tatuadorNome(t.getTatuador() != null ? t.getTatuador().getNome() : null)
                 .categoria(t.getCategoria())
                 .formaPagamento(t.getFormaPagamento())
+                .taxaOperadoraId(t.getTaxaOperadora() != null ? t.getTaxaOperadora().getId() : null)
+                .taxaOperadoraNome(t.getTaxaOperadora() != null ? t.getTaxaOperadora().getOperadora() : null)
+                .taxaValor(t.getTaxaValor())
+                .valorLiquido(t.getValorLiquido())
                 .comissaoPercentual(t.getComissaoPercentual())
                 .valorRepasse(t.getValorRepasse())
                 .agendamentoId(t.getAgendamento() != null ? t.getAgendamento().getId() : null)

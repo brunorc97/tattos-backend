@@ -23,6 +23,10 @@ public interface AgendamentoRepository extends JpaRepository<Agendamento, Long> 
 
     long countByStatus(StatusAgendamento status);
 
+    long countByClienteIdAndStatus(Long clienteId, StatusAgendamento status);
+
+    boolean existsByTatuadorIdAndClienteId(Long tatuadorId, Long clienteId);
+
     long countBySinalPagoTrue();
 
     long countByValorSinalGreaterThan(java.math.BigDecimal valor);

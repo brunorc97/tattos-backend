@@ -45,6 +45,8 @@ public class TransacaoRequestDTO {
     
     @Schema(example = "PIX")private String formaPagamento;
 
+    @Schema(example = "1")private Long taxaOperadoraId;
+
     
     @Schema(example = "60.00")private BigDecimal comissaoPercentual;
 

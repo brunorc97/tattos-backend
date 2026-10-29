@@ -88,6 +88,9 @@ public class SecurityConfig {
                         "/api/v1/projetos/**", "/api/v1/projects/**", "/api/v1/orcamentos/**", "/api/v1/budgets/**",
                         "/api/v1/kanban/**", "/api/v1/kanban-cards/**", "/api/v1/aftercare/**").hasAnyRole("GESTOR", "TATUADOR", "CLIENTE")
 
+                // CRM de clientes (contatos, perfil) — regra fina por endpoint
+                .requestMatchers("/api/v1/clientes/**").hasAnyRole("GESTOR", "TATUADOR")
+
                 // Módulo de Usuários
                 .requestMatchers("/api/usuarios/**", "/api/artists/**", "/api/tatuadores/**",
                         "/api/v1/usuarios/**", "/api/v1/artists/**", "/api/v1/tatuadores/**").authenticated()

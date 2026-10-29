@@ -70,6 +70,92 @@ class TransacaoServiceTest {
         assertEquals(new BigDecimal("1200.00"), response.getValorRepasse()); // 60% de 2000 = 1200
     }
 
+    @Autowired
+    private com.tattos.repository.TaxaOperadoraRepository taxaOperadoraRepository;
+
+    @Test
+    @DisplayName("Receita em cartão calcula taxa e valor líquido da operadora")
+    void receitaComTaxaCalculaLiquido() {
+        var taxa = taxaOperadoraRepository.save(com.tattos.model.TaxaOperadora.builder()
+                .operadora("Stone").modalidade(com.tattos.model.enums.ModalidadePagamento.DEBITO)
+                .taxaPercentual(new BigDecimal("1.99")).build());
+
+        TransacaoResponseDTO response = transacaoService.criar(TransacaoRequestDTO.builder()
+                .descricao("Sessão no débito")
+                .valor(new BigDecimal("1000.00"))
+                .tipo(TipoTransacao.RECEITA)
+                .data(LocalDate.now())
+                .tatuadorId(tatuador.getId())
+                .taxaOperadoraId(taxa.getId())
+                .build());
+
+        assertEquals(new BigDecimal("19.90"), response.getTaxaValor());
+        assertEquals(new BigDecimal("980.10"), response.getValorLiquido());
+    }
+
+    @Test
+    @DisplayName("Receita PIX sem operadora tem líquido igual ao valor")
+    void receitaSemTaxaLiquidoIgual() {
+        TransacaoResponseDTO response = transacaoService.criar(TransacaoRequestDTO.builder()
+                .descricao("Sessão PIX")
+                .valor(new BigDecimal("500.00"))
+                .tipo(TipoTransacao.RECEITA)
+                .data(LocalDate.now())
+                .tatuadorId(tatuador.getId())
+                .formaPagamento("PIX")
+                .build());
+
+        assertEquals(new BigDecimal("500.00"), response.getValorLiquido());
+        assertEquals(0, response.getTaxaValor().compareTo(BigDecimal.ZERO));
+    }
+
+    @Test
+    @DisplayName("Despesa com taxaOperadoraId é rejeitada")
+    void despesaComTaxaRejeitada() {
+        var taxa = taxaOperadoraRepository.save(com.tattos.model.TaxaOperadora.builder()
+                .operadora("Rede").modalidade(com.tattos.model.enums.ModalidadePagamento.DEBITO)
+                .taxaPercentual(new BigDecimal("1.50")).build());
+
+        assertThrows(com.tattos.exception.BusinessException.class, () -> transacaoService.criar(TransacaoRequestDTO.builder()
+                .descricao("Compra de insumos")
+                .valor(new BigDecimal("200.00"))
+                .tipo(TipoTransacao.DESPESA)
+                .data(LocalDate.now())
+                .taxaOperadoraId(taxa.getId())
+                .build()));
+    }
+
+    @Test
+    @DisplayName("Balanço exclui ADIANTAMENTO e expõe taxas + faturamento líquido")
+    void balancoExcluiAdiantamentoEExpoemTaxas() {
+        var taxa = taxaOperadoraRepository.save(com.tattos.model.TaxaOperadora.builder()
+                .operadora("Stone").modalidade(com.tattos.model.enums.ModalidadePagamento.CREDITO_A_VISTA)
+                .taxaPercentual(new BigDecimal("2.00")).build());
+
+        // receita com taxa: bruto 1000, taxa 20, líquido 980
+        transacaoService.criar(TransacaoRequestDTO.builder()
+                .descricao("Receita cartão").valor(new BigDecimal("1000.00"))
+                .tipo(TipoTransacao.RECEITA).data(LocalDate.now())
+                .taxaOperadoraId(taxa.getId()).build());
+        // despesa
+        transacaoService.criar(TransacaoRequestDTO.builder()
+                .descricao("Despesa").valor(new BigDecimal("200.00"))
+                .tipo(TipoTransacao.DESPESA).data(LocalDate.now()).build());
+        // adiantamento: NÃO entra em receita nem despesa
+        transacaoService.criar(TransacaoRequestDTO.builder()
+                .descricao("Adiantamento").valor(new BigDecimal("500.00"))
+                .tipo(TipoTransacao.ADIANTAMENTO).data(LocalDate.now())
+                .tatuadorId(tatuador.getId()).build());
+
+        var balanco = transacaoService.obterBalancoMensal(
+                LocalDate.now().getMonthValue(), LocalDate.now().getYear());
+
+        assertEquals(new BigDecimal("1000.00"), balanco.getFaturamentoBruto());
+        assertEquals(new BigDecimal("980.00"), balanco.getFaturamentoLiquido());
+        assertEquals(new BigDecimal("20.00"), balanco.getTotalTaxas());
+        assertEquals(new BigDecimal("200.00"), balanco.getTotalDespesas());
+    }
+
     @Test
     @DisplayName("Deve gerar o balanço gerencial 'Smile Now, Cry Later' com faturamento, despesas, repasses e lucro líquido")
     void deveCalcularBalancoMensalSmileNowCryLater() {

@@ -33,6 +33,7 @@ public class TransacaoService {
     private final TransacaoFinanceiraRepository transacaoRepository;
     private final UsuarioRepository usuarioRepository;
     private final AgendamentoRepository agendamentoRepository;
+    private final com.tattos.repository.TaxaOperadoraRepository taxaOperadoraRepository;
 
     @Transactional
     public TransacaoResponseDTO criar(TransacaoRequestDTO dto) {
@@ -60,6 +61,21 @@ public class TransacaoService {
             comissao = BigDecimal.ZERO;
         }
 
+        // Taxa da maquininha: só em receitas; valores persistidos (edição de taxa não recalcula passado)
+        com.tattos.model.TaxaOperadora taxaOperadora = null;
+        BigDecimal taxaValor = BigDecimal.ZERO;
+        if (dto.getTaxaOperadoraId() != null) {
+            if (!TipoTransacao.RECEITA.equals(dto.getTipo())) {
+                throw new com.tattos.exception.BusinessException(
+                        "Taxa de operadora só se aplica a receitas (cartão).");
+            }
+            taxaOperadora = taxaOperadoraRepository.findById(dto.getTaxaOperadoraId())
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Taxa de operadora não encontrada com ID: " + dto.getTaxaOperadoraId()));
+            taxaValor = dto.getValor().multiply(taxaOperadora.getTaxaPercentual())
+                    .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
+        }
+
         TransacaoFinanceira transacao = TransacaoFinanceira.builder()
                 .descricao(dto.getDescricao().trim())
                 .valor(dto.getValor())
@@ -69,6 +85,9 @@ public class TransacaoService {
                 .tatuador(tatuador)
                 .categoria(dto.getCategoria())
                 .formaPagamento(dto.getFormaPagamento())
+                .taxaOperadora(taxaOperadora)
+                .taxaValor(taxaValor)
+                .valorLiquido(dto.getValor().subtract(taxaValor))
                 .comissaoPercentual(comissao)
                 .valorRepasse(valorRepasse)
                 .agendamento(agendamento)
@@ -159,6 +178,8 @@ public class TransacaoService {
         LocalDate fim = ym.atEndOfMonth();
 
         BigDecimal faturamentoBruto = transacaoRepository.sumReceitasByPeriodo(inicio, fim);
+        BigDecimal faturamentoLiquido = transacaoRepository.sumReceitasLiquidasByPeriodo(inicio, fim);
+        BigDecimal totalTaxas = transacaoRepository.sumTaxasByPeriodo(inicio, fim);
         BigDecimal totalDespesas = transacaoRepository.sumDespesasByPeriodo(inicio, fim);
         BigDecimal totalRepasses = transacaoRepository.sumTotalRepassesByPeriodo(inicio, fim);
 
@@ -176,6 +197,8 @@ public class TransacaoService {
                 .mes(mes)
                 .ano(ano)
                 .faturamentoBruto(faturamentoBruto)
+                .faturamentoLiquido(faturamentoLiquido)
+                .totalTaxas(totalTaxas)
                 .totalDespesas(totalDespesas)
                 .totalRepassesTatuadores(totalRepasses)
                 .totalSaidas(totalSaidas)

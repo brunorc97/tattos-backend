@@ -64,6 +64,17 @@ public class TransacaoFinanceira {
     @Column(name = "forma_pagamento", length = 50)
     private String formaPagamento;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "taxa_operadora_id")
+    private TaxaOperadora taxaOperadora;
+
+    @Builder.Default
+    @Column(name = "taxa_valor", nullable = false, precision = 10, scale = 2)
+    private BigDecimal taxaValor = BigDecimal.ZERO;
+
+    @Column(name = "valor_liquido", precision = 10, scale = 2)
+    private BigDecimal valorLiquido;
+
     @Builder.Default
     @Column(name = "comissao_percentual", precision = 5, scale = 2)
     private BigDecimal comissaoPercentual = BigDecimal.ZERO;

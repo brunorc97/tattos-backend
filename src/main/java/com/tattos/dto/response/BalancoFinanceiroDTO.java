@@ -22,6 +22,8 @@ public class BalancoFinanceiroDTO {
 
     // Smile Now
     private BigDecimal faturamentoBruto;
+    private BigDecimal faturamentoLiquido;
+    private BigDecimal totalTaxas;
 
     // Cry Later
     private BigDecimal totalDespesas;

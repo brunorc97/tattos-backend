@@ -37,6 +37,18 @@ public interface TransacaoFinanceiraRepository extends JpaRepository<TransacaoFi
            "AND t.data BETWEEN :inicio AND :fim")
     BigDecimal sumDespesasByPeriodo(@Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim);
 
+    @Query("SELECT COALESCE(SUM(t.valorLiquido), 0) FROM TransacaoFinanceira t " +
+           "WHERE t.tipo = com.tattos.model.enums.TipoTransacao.RECEITA " +
+           "AND t.status = com.tattos.model.enums.StatusTransacao.CONCLUIDO " +
+           "AND t.data BETWEEN :inicio AND :fim")
+    BigDecimal sumReceitasLiquidasByPeriodo(@Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim);
+
+    @Query("SELECT COALESCE(SUM(t.taxaValor), 0) FROM TransacaoFinanceira t " +
+           "WHERE t.tipo = com.tattos.model.enums.TipoTransacao.RECEITA " +
+           "AND t.status = com.tattos.model.enums.StatusTransacao.CONCLUIDO " +
+           "AND t.data BETWEEN :inicio AND :fim")
+    BigDecimal sumTaxasByPeriodo(@Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim);
+
     @Query("SELECT COALESCE(SUM(t.valorRepasse), 0) FROM TransacaoFinanceira t " +
            "WHERE t.tatuador.id = :tatuadorId " +
            "AND t.status = com.tattos.model.enums.StatusTransacao.CONCLUIDO " +

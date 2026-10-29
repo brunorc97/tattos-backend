@@ -89,6 +89,41 @@ class ClienteBuscaTest {
     }
 
     @Test
+    @DisplayName("Tatuador vê apenas clientes com agendamento com ele")
+    void tatuadorVeApenasSeusClientes() throws Exception {
+        com.tattos.model.Tatuador tatA = (com.tattos.model.Tatuador) usuarioRepository.save(
+                com.tattos.model.Tatuador.builder().nome("Tat CRM A").email("crm.tata@tattos.com")
+                        .senha("h").comissaoPercentual(new java.math.BigDecimal("60")).ativo(true).build());
+        com.tattos.model.Tatuador tatB = (com.tattos.model.Tatuador) usuarioRepository.save(
+                com.tattos.model.Tatuador.builder().nome("Tat CRM B").email("crm.tatb@tattos.com")
+                        .senha("h").comissaoPercentual(new java.math.BigDecimal("60")).ativo(true).build());
+
+        // Maria tem agendamento com A; João só com B
+        var maria = usuarioRepository.findByEmail("maria@x.com").orElseThrow();
+        var joao = usuarioRepository.findByEmail("joao@x.com").orElseThrow();
+        agendamentoRepository.save(com.tattos.model.Agendamento.builder()
+                .cliente(maria).tatuador(tatA).cabine("C1")
+                .dataHora(java.time.LocalDateTime.now().plusDays(1))
+                .valor(new java.math.BigDecimal("500")).build());
+        agendamentoRepository.save(com.tattos.model.Agendamento.builder()
+                .cliente(joao).tatuador(tatB).cabine("C2")
+                .dataHora(java.time.LocalDateTime.now().plusDays(1))
+                .valor(new java.math.BigDecimal("500")).build());
+
+        String token = "Bearer " + jwtTokenProvider.generateTokenForUser(tatA);
+        mockMvc.perform(get("/api/v1/usuarios/clientes").header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].nome").value("Maria Silva"));
+    }
+
+    @Autowired
+    private com.tattos.repository.AgendamentoRepository agendamentoRepository;
+
+    @Autowired
+    private com.tattos.security.JwtTokenProvider jwtTokenProvider;
+
+    @Test
     @DisplayName("Sem query respeita page/size (sem dump completo)")
     @WithMockUser(roles = "GESTOR")
     void semQueryRespeitaPaginacao() throws Exception {

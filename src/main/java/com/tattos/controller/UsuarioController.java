@@ -70,9 +70,17 @@ public class UsuarioController {
     @PreAuthorize("hasAnyRole('GESTOR','TATUADOR')")
     public ResponseEntity<org.springframework.data.domain.Page<UsuarioResponseDTO>> listarClientes(
             @RequestParam(required = false) String query,
-            @org.springframework.data.web.PageableDefault(size = 20, sort = "nome") org.springframework.data.domain.Pageable pageable) {
+            @org.springframework.data.web.PageableDefault(size = 20, sort = "nome") org.springframework.data.domain.Pageable pageable,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.tattos.model.Usuario logado) {
         String q = (query != null && !query.isBlank()) ? query.trim() : null;
         String digits = q != null && q.matches(".*\\d.*") ? q.replaceAll("\\D", "") : null;
+
+        // Tatuador: apenas clientes com agendamento com ele
+        if (logado != null && logado.isTatuador()) {
+            return ResponseEntity.ok(
+                    usuarioRepository.buscarClientesDoTatuador(logado.getId(), q, digits, pageable)
+                            .map(UsuarioResponseDTO::fromEntity));
+        }
         if (q == null) {
             return ResponseEntity.ok(usuarioRepository.findClientesAtivos(pageable)
                     .map(UsuarioResponseDTO::fromEntity));
