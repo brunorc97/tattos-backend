@@ -36,12 +36,12 @@ class TaxaOperadoraControllerTest {
     }
 
     @Test
-    @DisplayName("Gestor cadastra taxa por operadora/modalidade")
+    @DisplayName("Gestor cadastra taxa por operadora/modalidade (crédito à vista, taxa única)")
     @WithMockUser(roles = "GESTOR")
     void criarTaxa() throws Exception {
         mockMvc.perform(post("/api/v1/financeiro/taxas-operadoras")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"operadora\": \"Stone\", \"modalidade\": \"CREDITO_PARCELADO\", \"taxaPercentual\": 3.49}"))
+                        .content("{\"operadora\": \"Stone\", \"modalidade\": \"CREDITO_A_VISTA\", \"taxaPercentual\": 3.49}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.operadora").value("Stone"))
                 .andExpect(jsonPath("$.taxaPercentual").value(3.49));
@@ -88,7 +88,7 @@ class TaxaOperadoraControllerTest {
         StringBuilder parcelas = new StringBuilder();
         for (int i = 1; i <= 10; i++) {
             parcelas.append("{\"parcelas\": ").append(i)
-                    .append(", \"taxaPercentual\": ").append(String.format("%.2f", 2.0 + i * 0.3)).append("}");
+                    .append(", \"taxaPercentual\": ").append(String.format(java.util.Locale.ROOT, "%.2f", 2.0 + i * 0.3)).append("}");
             if (i < 10) parcelas.append(",");
         }
         mockMvc.perform(post("/api/v1/financeiro/taxas-operadoras")

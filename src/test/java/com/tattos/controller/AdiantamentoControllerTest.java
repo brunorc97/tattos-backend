@@ -83,6 +83,18 @@ class AdiantamentoControllerTest {
     }
 
     @Test
+    @DisplayName("Saldo de tatuador sem adiantamentos retorna 0 (sem 500)")
+    @WithMockUser(roles = "GESTOR")
+    void saldoZeradoSem500() throws Exception {
+        mockMvc.perform(get("/api/v1/financeiro/adiantamentos")
+                        .param("tatuadorId", tatuador.getId().toString())
+                        .param("emAberto", "true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.saldoEmAberto").value(0.0))
+                .andExpect(jsonPath("$.content.length()").value(0));
+    }
+
+    @Test
     @DisplayName("Tatuador inexistente retorna 404")
     @WithMockUser(roles = "GESTOR")
     void tatuadorInexistente() throws Exception {

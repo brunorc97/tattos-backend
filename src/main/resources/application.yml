@@ -5,6 +5,11 @@ logging:
   level:
     root: INFO
     org.springframework.web: INFO
+    org.hibernate.SQL: WARN
+    org.hibernate.orm.deprecation: WARN
+    org.hibernate.orm.jdbc.error: WARN
+    org.apache.pdfbox: WARN
+    org.apache.fontbox: WARN
   pattern:
     console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSS} %5p [%15.15t] [%X{correlationId:-no-trace}] [%X{user:-anon}] %-40.40logger{39} : %m%n"
 

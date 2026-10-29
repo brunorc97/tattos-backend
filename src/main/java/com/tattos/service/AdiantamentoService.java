@@ -87,7 +87,7 @@ public class AdiantamentoService {
     public BigDecimal abater(Long tatuadorId, BigDecimal limite) {
         BigDecimal restante = limite;
         BigDecimal abatidoTotal = BigDecimal.ZERO;
-        for (TransacaoFinanceira ad : transacaoRepository.findAdiantamentosEmAbertoList(tatuadorId)) {
+        for (TransacaoFinanceira ad : transacaoRepository.findAdiantamentosEmAbertoParaAbater(tatuadorId)) {
             if (restante.compareTo(BigDecimal.ZERO) <= 0) break;
             BigDecimal saldoAd = ad.getValor().subtract(ad.getAbatido());
             BigDecimal abater = saldoAd.min(restante);

@@ -48,10 +48,16 @@ public interface TransacaoFinanceiraRepository extends JpaRepository<TransacaoFi
             @Param("fim") java.time.LocalDate fim,
             org.springframework.data.domain.Pageable pageable);
 
-    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    /** Leitura simples (sem lock) — saldo e listagens. */
     @Query("SELECT t FROM TransacaoFinanceira t WHERE t.tipo = com.tattos.model.enums.TipoTransacao.ADIANTAMENTO "
             + "AND t.tatuador.id = :tatuadorId AND t.abatido < t.valor ORDER BY t.data ASC, t.id ASC")
     java.util.List<TransacaoFinanceira> findAdiantamentosEmAbertoList(@Param("tatuadorId") Long tatuadorId);
+
+    /** Com lock pessimista — somente no caminho de escrita (abater em pagamento). */
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT t FROM TransacaoFinanceira t WHERE t.tipo = com.tattos.model.enums.TipoTransacao.ADIANTAMENTO "
+            + "AND t.tatuador.id = :tatuadorId AND t.abatido < t.valor ORDER BY t.data ASC, t.id ASC")
+    java.util.List<TransacaoFinanceira> findAdiantamentosEmAbertoParaAbater(@Param("tatuadorId") Long tatuadorId);
 
     @Query("SELECT t FROM TransacaoFinanceira t WHERE t.tipo = com.tattos.model.enums.TipoTransacao.ADIANTAMENTO "
             + "AND t.tatuador.id = :tatuadorId AND t.abatido < t.valor")
