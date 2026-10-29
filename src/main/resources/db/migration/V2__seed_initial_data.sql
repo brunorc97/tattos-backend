@@ -1,50 +1,50 @@
 -- Seed inicial do ambiente de desenvolvimento. As verificacoes de existencia
 -- permitem aplicar esta carga tambem em bancos baselineados que ja tenham dados.
 
-INSERT INTO usuarios (nome, email, senha, role, telefone, endereco, especialidade, bio, cargo, comissao_percentual, ativo)
+INSERT INTO usuarios (nome, email, senha, role, telefone, endereco, especialidade, bio, cargo, comissao_percentual, ativo, codigo_indicacao)
 SELECT seed.nome, seed.email, seed.senha, seed.role, seed.telefone, seed.endereco, seed.especialidade, seed.bio,
-       seed.cargo, seed.comissao_percentual, TRUE
+       seed.cargo, seed.comissao_percentual, TRUE, seed.codigo_indicacao
 FROM (
     SELECT 'Administrador Gestor' AS nome, 'admin@tattos.com' AS email,
            '$2a$10$rNzVnwOUyJkXVl.T9/8QvOAUFlxFPGHdf2louNuQ1q/f4b7QeV4N.' AS senha,
            'ROLE_GESTOR' AS role, '(11) 99999-0001' AS telefone,
            'Av. Paulista, 1000 - Bela Vista, SP' AS endereco, NULL AS especialidade, NULL AS bio,
            'Gestor Executivo' AS cargo,
-           0.00 AS comissao_percentual
+           0.00 AS comissao_percentual, NULL AS codigo_indicacao
     UNION ALL SELECT 'Carlos Gerente', 'gerente@tattos.com',
            '$2a$10$rNzVnwOUyJkXVl.T9/8QvOAUFlxFPGHdf2louNuQ1q/f4b7QeV4N.',
            'ROLE_GESTOR', '(11) 99999-0002', 'Rua Oscar Freire, 300 - Jardins, SP',
-           NULL, NULL, 'Gerente de Operações', 0.00
+           NULL, NULL, 'Gerente de Operações', 0.00, NULL
     UNION ALL SELECT 'Mãozinha Leve', 'maozinha@tattos.com',
            '$2a$10$rNzVnwOUyJkXVl.T9/8QvOAUFlxFPGHdf2louNuQ1q/f4b7QeV4N.',
            'ROLE_TATUADOR', '(11) 98765-4321', 'Rua Augusta, 500 - Consolação, SP',
            'Microrealismo & Fine Line',
            'Famoso por fazer traços tão leves que o cliente dorme durante a sessão de 4 horas.',
-           NULL, 70.00
+           NULL, 70.00, NULL
     UNION ALL SELECT 'Bracinho Curto', 'bracinhocurto@tattos.com',
            '$2a$10$rNzVnwOUyJkXVl.T9/8QvOAUFlxFPGHdf2louNuQ1q/f4b7QeV4N.',
            'ROLE_TATUADOR', '(11) 97654-3210', 'Vila Madalena, SP', 'Old School & Bold Line',
-           'Especialista em fechamentos pesados com linhas grossas e cores sólidas.', NULL, 65.00
+           'Especialista em fechamentos pesados com linhas grossas e cores sólidas.', NULL, 65.00, NULL
     UNION ALL SELECT 'Agulha de Ouro', 'agulhadeouro@tattos.com',
            '$2a$10$rNzVnwOUyJkXVl.T9/8QvOAUFlxFPGHdf2louNuQ1q/f4b7QeV4N.',
            'ROLE_TATUADOR', '(11) 96543-2109', 'Pinheiros, SP', 'Realismo Preto e Cinza',
-           'Campeão de convenções, especialista em retratos e texturas hiper-realistas.', NULL, 70.00
+           'Campeão de convenções, especialista em retratos e texturas hiper-realistas.', NULL, 70.00, NULL
     UNION ALL SELECT 'Treme-Treme', 'tremetreme@tattos.com',
            '$2a$10$rNzVnwOUyJkXVl.T9/8QvOAUFlxFPGHdf2louNuQ1q/f4b7QeV4N.',
            'ROLE_TATUADOR', '(11) 95432-1098', 'Moema, SP', 'Tribal & Geek',
-           'Apesar do apelido irônico, tem a mão mais firme do estúdio para geometria sagrada.', NULL, 60.00
+           'Apesar do apelido irônico, tem a mão mais firme do estúdio para geometria sagrada.', NULL, 60.00, NULL
     UNION ALL SELECT 'Carlos Silva (Cliente Teste)', 'cliente@tattos.com',
            '$2a$10$rNzVnwOUyJkXVl.T9/8QvOAUFlxFPGHdf2louNuQ1q/f4b7QeV4N.',
            'ROLE_CLIENTE', '(11) 91234-5678', 'Rua dos Pinheiros, 200 - Pinheiros, SP',
-           NULL, NULL, NULL, 70.00
+           NULL, NULL, NULL, 0.00, 'TATTO000007'
     UNION ALL SELECT 'Mariana Costa', 'mariana@email.com',
            '$2a$10$rNzVnwOUyJkXVl.T9/8QvOAUFlxFPGHdf2louNuQ1q/f4b7QeV4N.',
            'ROLE_CLIENTE', '(11) 92345-6789', 'Alameda Santos, 1000 - Cerqueira César, SP',
-           NULL, NULL, NULL, 70.00
+           NULL, NULL, NULL, 0.00, 'TATTO000008'
     UNION ALL SELECT 'Roberto "Bob" Mendes', 'bob@email.com',
            '$2a$10$rNzVnwOUyJkXVl.T9/8QvOAUFlxFPGHdf2louNuQ1q/f4b7QeV4N.',
            'ROLE_CLIENTE', '(11) 93456-7890', 'Rua Harmonia, 400 - Vila Madalena, SP',
-           NULL, NULL, NULL, 70.00
+           NULL, NULL, NULL, 0.00, 'TATTO000009'
 ) AS seed
 LEFT JOIN usuarios existing ON existing.email = seed.email
 WHERE existing.id IS NULL;

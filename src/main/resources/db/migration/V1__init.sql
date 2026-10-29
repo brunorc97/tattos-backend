@@ -32,7 +32,7 @@ CREATE TABLE usuarios
     especialidade       VARCHAR(100),
     bio                 TEXT,
     cargo               VARCHAR(100),
-    comissao_percentual DECIMAL(5, 2)         DEFAULT 70.00,
+    comissao_percentual DECIMAL(5, 2)         DEFAULT 0.00,
     ativo               BOOLEAN      NOT NULL DEFAULT TRUE,
     created_at          TIMESTAMP             DEFAULT CURRENT_TIMESTAMP,
     updated_at          TIMESTAMP             DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
