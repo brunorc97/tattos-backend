@@ -10,6 +10,10 @@ logging:
     org.hibernate.orm.jdbc.error: WARN
     org.apache.pdfbox: WARN
     org.apache.fontbox: WARN
+    org.apache.pdfbox.pdmodel.font: ERROR
+    org.apache.pdfbox.pdmodel.font.PDType1Font: ERROR
+    org.apache.pdfbox.pdmodel.font.FileSystemFontProvider: ERROR
+    org.springframework.data.web: ERROR
   pattern:
     console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSS} %5p [%15.15t] [%X{correlationId:-no-trace}] [%X{user:-anon}] %-40.40logger{39} : %m%n"
 
