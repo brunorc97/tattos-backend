@@ -17,10 +17,20 @@ Principais módulos
 
 Módulo	Descrição	Status
 Autenticação	Login, registro e autenticação via JWT	✅
-Agendamentos	Controle de sessões e horários	✅
-Anamnese	Fichas de anamnese dos clientes	✅
+Agendamentos	Controle de sessões e horários, solicitações de agendamento	✅
+Anamnese	Fichas de anamnese dos clientes com registro de assinatura	✅
+Orçamentos	Geração e gestão de orçamentos	✅
+Projetos / Kanban	Gestão de projetos em quadro Kanban, aprovação e sinal	✅
 Estoque	Controle de insumos utilizados pelo estúdio	✅
-Financeiro	Registro de receitas e despesas	✅
+Financeiro	Receitas, despesas, taxas de operadora e valor líquido	✅
+Adiantamentos	Adiantamentos a tatuadores com dedução de comissão	✅
+Comissões	Pagamento de comissões com recibo em PDF	✅
+Cupons	Cupons de desconto com validação e controle de uso	✅
+Clientes (CRM)	Cadastro de clientes, contatos e fidelização	✅
+Aftercare	Acompanhamento pós-procedimento com progresso de cicatrização	✅
+Bancadas	Controle de bancadas/estações de trabalho	✅
+Arquivos	Upload e gestão de arquivos	✅
+Google Calendar	Integração com Google Calendar	✅
 Usuários	Gestão de usuários e perfis de acesso	✅
 API REST	Endpoints documentados via OpenAPI	✅
 Segurança	JWT, BCrypt, CORS e Security Headers	✅
@@ -46,6 +56,8 @@ O back-end foi desenvolvido seguindo uma arquitetura baseada na separação de r
                         │ Auth / Agendamento  │
                         │ Estoque / Financeiro│
                         │ Anamnese / Usuários │
+                        │ Orçamento / Projeto │
+                        │ Cupons / Comissões  │
                         └──────────┬──────────┘
                                    │
                                    ▼
@@ -85,9 +97,22 @@ src/
             ├── controller/
             │   ├── AuthController
             │   ├── AgendamentoController
-            │   ├── EstoqueController
-            │   ├── FinanceiroController
+            │   ├── SolicitacaoAgendamentoController
             │   ├── FichaAnamneseController
+            │   ├── OrcamentoController
+            │   ├── ProjetoController
+            │   ├── KanbanCardController
+            │   ├── InsumoController
+            │   ├── TransacaoController
+            │   ├── TaxaOperadoraController
+            │   ├── AdiantamentoController
+            │   ├── ComissaoController / PagamentoComissaoController
+            │   ├── CupomController
+            │   ├── ClienteCrmController
+            │   ├── AftercareController
+            │   ├── BancadaController
+            │   ├── FileController
+            │   ├── GoogleCalendarController
             │   └── UsuarioController
             │
             ├── dto/
@@ -98,11 +123,19 @@ src/
             │   └── GlobalExceptionHandler
             │
             ├── model/
-            │   ├── Usuario
-            │   ├── Agendamento
+            │   ├── Usuario / Cliente / Tatuador / Gestor
+            │   ├── Agendamento / SolicitacaoAgendamento
+            │   ├── FichaAnamnese / AssinaturaLog
+            │   ├── Orcamento / Projeto / KanbanCard
             │   ├── Insumo
-            │   ├── TransacaoFinanceira
-            │   └── FichaAnamnese
+            │   ├── TransacaoFinanceira / TaxaOperadora
+            │   ├── Adiantamento (ver pacote financeiro)
+            │   ├── PagamentoComissao / PagamentoComissaoItem
+            │   ├── Cupom
+            │   ├── Aftercare
+            │   ├── Arquivo
+            │   ├── GoogleAccount
+            │   └── enums (StatusAgendamento, StatusTransacao, UserRole, ...)
             │
             ├── repository/
             │
@@ -133,7 +166,7 @@ Orquestração local	Docker Compose
 Testes	JUnit / Spring Test
 Cobertura	JaCoCo
 CI/CD	GitHub Actions
-Front-end	React 18 — planejado
+Front-end	React — em desenvolvimento
 
 
 Segurança
@@ -189,9 +222,21 @@ Controle de acesso
 Módulo	Endpoint base	GESTOR	TATUADOR	CLIENTE
 Autenticação	/api/auth/**	✅	✅	✅
 Agendamentos	/api/agendamentos/**	✅	✅	✅
+Solicitações de agendamento	/api/v1/solicitacoes-agendamento/**	✅	✅	✅
 Anamnese	/api/fichas-anamnese/**	✅	✅	✅
+Orçamentos	/api/orcamentos/**	✅	✅	✅
+Projetos / Kanban	/api/projetos/**, /api/kanban/**	✅	✅	✅
+Aftercare	/api/aftercare/**	✅	✅	✅
+Clientes (CRM)	/api/v1/clientes/**	✅	✅	❌
 Estoque	/api/estoque/**	✅	✅	❌
 Financeiro	/api/financeiro/**	✅	✅	❌
+Adiantamentos	/api/v1/financeiro/adiantamentos/**	✅	❌	❌
+Comissões	/api/comissoes/**	✅	❌	❌
+Taxas de operadora	/api/v1/financeiro/taxas-operadoras/**	✅	❌	❌
+Cupons	/api/v1/cupons/**	✅	❌	❌
+Bancadas	/api/v1/bancadas/**	✅	✅	❌
+Arquivos	/api/v1/files/**	✅	✅	✅
+Google Calendar	/api/google-calendar/**	✅	✅	❌
 Usuários	/api/usuarios/**	✅	❌	❌
 
 ⸻
@@ -219,11 +264,19 @@ A evolução do schema é controlada pelo Flyway, permitindo versionar alteraç�
 
 Principais entidades
 
-* Usuario
-* Agendamento
-* FichaAnamnese
+* Usuario / Cliente / Tatuador / Gestor
+* Agendamento / SolicitacaoAgendamento
+* FichaAnamnese / AssinaturaLog
+* Orcamento / Projeto / KanbanCard
 * Insumo
-* TransacaoFinanceira
+* TransacaoFinanceira / TaxaOperadora / TaxaOperadoraParcela
+* PagamentoComissao / PagamentoComissaoItem
+* Cupom
+* Aftercare / TrabalhoRealizado
+* Arquivo
+* GoogleAccount
+
+O schema é versionado pelo Flyway (migrações V1 a V27).
 
 ⸻
 
@@ -236,7 +289,11 @@ Sprint 0	Setup do projeto, Gradle, Docker e estrutura inicial	✅
 Sprint 1	Modelagem das entidades, banco e migrations	✅
 Sprint 2	Controllers, DTOs, Services e tratamento de exceções	✅
 Sprint 3	Autenticação JWT, Spring Security e testes	✅
-Sprint 4	OpenAPI, segurança avançada, logs e configuração de produção	🔄
+Sprint 4	OpenAPI, segurança avançada, logs e configuração de produção	✅
+Sprint 5	Orçamentos, projetos e quadro Kanban	✅
+Sprint 6	Solicitações de agendamento, CRM de clientes e aftercare	✅
+Sprint 7	Financeiro avançado: taxas de operadora, adiantamentos, comissões e cupons	✅
+Sprint 8	Integração Google Calendar, upload de arquivos e recibos em PDF	✅
 
 ⸻
 
@@ -522,14 +579,14 @@ Roadmap
 
 Funcionalidades planejadas para futuras versões:
 
-* Desenvolvimento do front-end em React;
+* Conclusão do front-end em React;
 * Dashboard gerencial;
 * Relatórios financeiros;
 * Alertas de estoque mínimo;
 * Interface responsiva;
-* Sistema de notificações;
+* Sistema de notificações e lembretes por e-mail;
 * Integração com meios de pagamento;
-* Monitoramento com Prometheus e Grafana;
+* Monitoramento com Prometheus e Grafana (métricas já exportadas via Actuator);
 * Deploy em ambiente cloud;
 * Orquestração com Kubernetes;
 * Suporte multiestúdio / multi-tenant;
