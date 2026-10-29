@@ -1,11 +1,11 @@
 -- =============================================================================
--- TattOS ERP - Migração V3: Fidelização (Indique e Ganhe) — backfill de dados
--- O DDL (colunas codigo_indicacao e desconto_aplicado) vive em V6.
+-- TattOS ERP - Migração V3: Fidelização (Indique e Ganhe) — DDL
+-- codigo_indicacao: exclusivo de clientes (gerado pelo backend para novos clientes).
+-- O backfill para bases legadas acontece na V6 (após o seed da V2).
 -- =============================================================================
 
--- Gerar códigos de indicação apenas para CLIENTES já existentes sem código.
--- Tatuadores/gestores não usam código de indicação.
-UPDATE usuarios
-SET codigo_indicacao = CONCAT('TATTO', LPAD(id, 6, '0'))
-WHERE codigo_indicacao IS NULL
-  AND role = 'ROLE_CLIENTE';
+ALTER TABLE usuarios
+    ADD COLUMN codigo_indicacao VARCHAR(20) UNIQUE;
+
+ALTER TABLE agendamentos
+    ADD COLUMN desconto_aplicado DECIMAL(10, 2) NOT NULL DEFAULT 0.00;
