@@ -91,6 +91,9 @@ public class SecurityConfig {
                 // CRM de clientes (contatos, perfil) — regra fina por endpoint
                 .requestMatchers("/api/v1/clientes/**").hasAnyRole("GESTOR", "TATUADOR")
 
+                // Cupons de desconto — gestor e tatuador
+                .requestMatchers("/api/v1/cupons/**").hasAnyRole("GESTOR", "TATUADOR")
+
                 // Módulo de Usuários
                 .requestMatchers("/api/usuarios/**", "/api/artists/**", "/api/tatuadores/**",
                         "/api/v1/usuarios/**", "/api/v1/artists/**", "/api/v1/tatuadores/**").authenticated()

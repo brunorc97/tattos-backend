@@ -45,6 +45,8 @@ public class AgendamentoRequestDTO {
     
     @Schema(example = "ABC123")private String codigoIndicacao;
 
+    @Schema(example = "BEMVINDO10")private String codigoCupom;
+
     
     @Schema(example = "Cliente prefere música ambiente")private String observacoes;
 }

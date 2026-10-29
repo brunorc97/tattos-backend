@@ -27,8 +27,23 @@ import static org.junit.jupiter.api.Assertions.*;
 @ActiveProfiles("test")
 class AgendamentoServiceTest {
 
+    @Autowired
+    private com.tattos.repository.CupomRepository cupomRepository;
+
+    private AgendamentoRequestDTO agendamentoBase(BigDecimal valor) {
+        return AgendamentoRequestDTO.builder()
+                .clienteId(cliente.getId())
+                .tatuadorId(tatuador.getId())
+                .dataHora(LocalDateTime.now().plusDays(2).withHour(14).withMinute(0))
+                .duracaoMinutos(120)
+                .cabine("Cabine 01")
+                .valor(valor)
+                .build();
+    }
+
     @org.junit.jupiter.api.AfterEach
     void tearDown() {
+        cupomRepository.deleteAll();
         transacaoRepository.deleteAll();
         agendamentoRepository.deleteAll();
         usuarioRepository.deleteAll();
@@ -272,6 +287,89 @@ class AgendamentoServiceTest {
 
         BusinessException ex = assertThrows(BusinessException.class, () -> agendamentoService.criar(dto));
         assertEquals("Código de indicação inválido.", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("Cupom de 10% em valor 1000 reduz total líquido para 900")
+    void cupomPorcentagem() {
+        cupomRepository.save(com.tattos.model.Cupom.builder()
+                .codigo("DEZ10").tipo(com.tattos.model.Cupom.Tipo.PORCENTAGEM)
+                .valor(new BigDecimal("10")).build());
+
+        AgendamentoRequestDTO dto = agendamentoBase(new BigDecimal("1000.00"));
+        dto.setCodigoCupom("DEZ10");
+
+        AgendamentoResponseDTO response = agendamentoService.criar(dto);
+
+        assertEquals(new BigDecimal("100.00"), response.getDescontoAplicado());
+    }
+
+    @Test
+    @DisplayName("Cupom fixo maior que o valor trunca no total (nunca negativo)")
+    void cupomFixoTruncado() {
+        cupomRepository.save(com.tattos.model.Cupom.builder()
+                .codigo("FIXO200").tipo(com.tattos.model.Cupom.Tipo.VALOR_FIXO)
+                .valor(new BigDecimal("200.00")).build());
+
+        AgendamentoRequestDTO dto = agendamentoBase(new BigDecimal("150.00"));
+        dto.setCodigoCupom("FIXO200");
+
+        AgendamentoResponseDTO response = agendamentoService.criar(dto);
+
+        assertEquals(new BigDecimal("150.00"), response.getDescontoAplicado());
+    }
+
+    @Test
+    @DisplayName("Cupom de tatuador A rejeitado em agendamento do tatuador B")
+    void cupomDeOutroTatuador() {
+        Tatuador tatB = (Tatuador) usuarioRepository.save(Tatuador.builder()
+                .nome("Tat B cupom").email("cupom.tatb@tattos.com").senha("hash")
+                .comissaoPercentual(new BigDecimal("60")).ativo(true).build());
+        cupomRepository.save(com.tattos.model.Cupom.builder()
+                .codigo("SOB").tipo(com.tattos.model.Cupom.Tipo.PORCENTAGEM)
+                .valor(new BigDecimal("10")).tatuador(tatB).build());
+
+        AgendamentoRequestDTO dto = agendamentoBase(new BigDecimal("500.00"));
+        dto.setCodigoCupom("SOB");
+
+        assertThrows(com.tattos.exception.BusinessException.class, () -> agendamentoService.criar(dto));
+    }
+
+    @Test
+    @DisplayName("Cupom esgotado (limite de usos) é rejeitado")
+    void cupomEsgotado() {
+        cupomRepository.save(com.tattos.model.Cupom.builder()
+                .codigo("SO1").tipo(com.tattos.model.Cupom.Tipo.PORCENTAGEM)
+                .valor(new BigDecimal("10")).limiteUsos(1).usos(1).build());
+
+        AgendamentoRequestDTO dto = agendamentoBase(new BigDecimal("500.00"));
+        dto.setCodigoCupom("SO1");
+
+        assertThrows(com.tattos.exception.BusinessException.class, () -> agendamentoService.criar(dto));
+    }
+
+    @Test
+    @DisplayName("Cupom de porcentagem acima de 100% é rejeitado na criação")
+    void cupomPorcentagemAcimaDe100() {
+        assertThrows(com.tattos.exception.BusinessException.class, () ->
+                cupomService.criar("INVALIDO", com.tattos.model.Cupom.Tipo.PORCENTAGEM,
+                        new BigDecimal("150"), null, null, null, null));
+    }
+
+    @Autowired
+    private com.tattos.service.CupomService cupomService;
+
+    @Test
+    @DisplayName("Cupom expirado é rejeitado")
+    void cupomExpirado() {
+        cupomRepository.save(com.tattos.model.Cupom.builder()
+                .codigo("VELHO").tipo(com.tattos.model.Cupom.Tipo.PORCENTAGEM)
+                .valor(new BigDecimal("10")).validade(java.time.LocalDate.now().minusDays(1)).build());
+
+        AgendamentoRequestDTO dto = agendamentoBase(new BigDecimal("500.00"));
+        dto.setCodigoCupom("VELHO");
+
+        assertThrows(com.tattos.exception.BusinessException.class, () -> agendamentoService.criar(dto));
     }
 
     @Test

@@ -34,6 +34,7 @@ public class AgendamentoService {
     private final AgendamentoRepository agendamentoRepository;
     private final UsuarioRepository usuarioRepository;
     private final org.springframework.context.ApplicationEventPublisher eventPublisher;
+    private final com.tattos.service.CupomService cupomService;
 
     @Transactional
     public AgendamentoResponseDTO criar(AgendamentoRequestDTO dto) {
@@ -49,6 +50,13 @@ public class AgendamentoService {
         LocalDateTime fim = inicio.plusMinutes(duracao);
         validarConflitos(tatuador.getId(), dto.getCabine(), inicio, fim, null);
         BigDecimal desconto = calcularDescontoIndicacao(dto.getCodigoIndicacao(), cliente.getId(), dto.getValor());
+        // cupom de desconto (promoção): soma ao da indicação, nunca além do valor do procedimento
+        com.tattos.model.Cupom cupom = null;
+        if (dto.getCodigoCupom() != null && !dto.getCodigoCupom().isBlank()) {
+            cupom = cupomService.buscarPorCodigo(dto.getCodigoCupom());
+            BigDecimal descontoCupom = cupomService.validarECalcular(cupom.getCodigo(), tatuador.getId(), dto.getValor());
+            desconto = desconto.add(descontoCupom).min(dto.getValor());
+        }
         BigDecimal sinal = (dto.getValorSinal() != null && dto.getValorSinal().compareTo(BigDecimal.ZERO) > 0)
                 ? dto.getValorSinal()
                 : (dto.getValor() != null ? dto.getValor().multiply(new BigDecimal("0.20")).setScale(2, RoundingMode.HALF_UP) : BigDecimal.ZERO);
@@ -69,6 +77,9 @@ public class AgendamentoService {
                 .observacoes(dto.getObservacoes())
                 .build();
         Agendamento salvo = agendamentoRepository.save(agendamento);
+        if (cupom != null) {
+            cupomService.registrarUso(cupom);
+        }
         return AgendamentoResponseDTO.fromEntity(salvo);
     }
 
