@@ -304,7 +304,9 @@ Pré-requisitos
 Para executar o projeto utilizando Docker:
 
 * Docker 24+
-* Docker Compose 2.20+
+  * **macOS**: instalar o [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+  * **Linux**: instalar o [Docker Engine](https://docs.docker.com/engine/install/)
+* Docker Compose 2.20+ (já incluído no Docker Desktop; no Linux, instalar o [plugin Compose](https://docs.docker.com/compose/install/linux/)) — o Makefile detecta automaticamente `docker compose` (v2) ou `docker-compose` (v1)
 * Git
 * Make — opcional, utilizado para atalhos
 
