@@ -60,6 +60,22 @@ class AuthServiceTest {
     }
 
     @Test
+    @DisplayName("Tatuador registrado NÃO deve receber código de indicação")
+    void tatuadorNaoRecebeCodigoIndicacao() {
+        RegisterRequestDTO request = RegisterRequestDTO.builder()
+                .nome("Sem Codigo")
+                .email("semcodigo@tattos.com")
+                .senha("segredo123")
+                .role(UserRole.ROLE_TATUADOR)
+                .comissaoPercentual(new BigDecimal("60.00"))
+                .build();
+
+        UsuarioResponseDTO response = authService.registrarFuncionario(request);
+
+        assertNull(response.getCodigoIndicacao());
+    }
+
+    @Test
     @DisplayName("Deve gerar código único de indicação automaticamente para novo cliente")
     void deveGerarCodigoIndicacaoParaNovoCliente() {
         RegisterRequestDTO request = RegisterRequestDTO.builder()

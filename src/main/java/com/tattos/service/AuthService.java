@@ -91,7 +91,7 @@ public class AuthService {
         usuario.setEndereco(request.getResolvedEndereco());
         usuario.setAtivo(true);
 
-        if (role == UserRole.ROLE_CLIENTE || usuario.getCodigoIndicacao() == null) {
+        if (role == UserRole.ROLE_CLIENTE) {
             usuario.setCodigoIndicacao(gerarCodigoIndicacaoUnico());
         }
 
