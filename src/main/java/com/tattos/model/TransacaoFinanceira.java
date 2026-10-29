@@ -75,6 +75,21 @@ public class TransacaoFinanceira {
     @Column(name = "valor_liquido", precision = 10, scale = 2)
     private BigDecimal valorLiquido;
 
+    /** Adiantamentos: quanto já foi abatido em pagamentos de comissão (FIFO). */
+    @Builder.Default
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal abatido = BigDecimal.ZERO;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "recibo_id")
+    private Arquivo recibo;
+
+    /** Status do repasse ao tatuador (pagamento de comissão). */
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status_repasse", nullable = false, length = 20)
+    private com.tattos.model.enums.StatusRepasse statusRepasse = com.tattos.model.enums.StatusRepasse.PENDENTE;
+
     @Builder.Default
     @Column(name = "comissao_percentual", precision = 5, scale = 2)
     private BigDecimal comissaoPercentual = BigDecimal.ZERO;
