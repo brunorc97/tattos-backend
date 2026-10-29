@@ -31,6 +31,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CorrelationIdFilter correlationIdFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -51,7 +52,10 @@ public class SecurityConfig {
                 )
             )
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**", "/api/v1/auth/**").permitAll()
+                .requestMatchers(HttpMethod.POST,
+                        "/api/auth/login", "/api/auth/register",
+                        "/api/v1/auth/login", "/api/v1/auth/register").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/auth/me", "/api/v1/auth/me").authenticated()
                 .requestMatchers("/error").permitAll()
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
@@ -88,6 +92,7 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        http.addFilterAfter(correlationIdFilter, JwtAuthenticationFilter.class);
 
         return http.build();
     }

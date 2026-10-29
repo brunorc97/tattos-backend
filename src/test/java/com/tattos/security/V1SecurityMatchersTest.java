@@ -41,6 +41,16 @@ class V1SecurityMatchersTest {
     }
 
     @Test
+    @DisplayName("GET /api/v1/auth/me anônimo deve ser barrado antes do controller")
+    void meV1ExigeAutenticacao() throws Exception {
+        mockMvc.perform(get("/api/v1/auth/me")
+                        .header("X-Correlation-ID", "anonymous-auth-me"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .header().string("X-Correlation-ID", "anonymous-auth-me"));
+    }
+
+    @Test
     @DisplayName("GET /api/v1/google-calendar/** anônimo não deve ser barrado pelo filtro de segurança")
     void googleCalendarV1EhPublico() throws Exception {
         // Sem permitAll, o filtro retornaria 401; qualquer outro status prova que passou pela segurança
