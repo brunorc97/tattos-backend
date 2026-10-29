@@ -75,6 +75,44 @@ class TaxaOperadoraControllerTest {
     }
 
     @Test
+    @DisplayName("Crédito parcelado exige grade 1x–10x completa")
+    @WithMockUser(roles = "GESTOR")
+    void parceladoExigeGrade() throws Exception {
+        // sem grade → 400
+        mockMvc.perform(post("/api/v1/financeiro/taxas-operadoras")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"operadora\": \"Cielo\", \"modalidade\": \"CREDITO_PARCELADO\", \"taxaPercentual\": 3.0}"))
+                .andExpect(status().isBadRequest());
+
+        // grade completa → 201
+        StringBuilder parcelas = new StringBuilder();
+        for (int i = 1; i <= 10; i++) {
+            parcelas.append("{\"parcelas\": ").append(i)
+                    .append(", \"taxaPercentual\": ").append(String.format("%.2f", 2.0 + i * 0.3)).append("}");
+            if (i < 10) parcelas.append(",");
+        }
+        mockMvc.perform(post("/api/v1/financeiro/taxas-operadoras")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"operadora\": \"Cielo\", \"modalidade\": \"CREDITO_PARCELADO\", \"taxaPercentual\": 0, "
+                                + "\"parcelas\": [" + parcelas + "]}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.parcelasTaxas.length()").value(10));
+    }
+
+    @Test
+    @DisplayName("Grade com parcela faltando (só 5) retorna 400")
+    @WithMockUser(roles = "GESTOR")
+    void gradeIncompleta() throws Exception {
+        mockMvc.perform(post("/api/v1/financeiro/taxas-operadoras")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"operadora\": \"SumUp\", \"modalidade\": \"CREDITO_PARCELADO\", \"taxaPercentual\": 0, "
+                                + "\"parcelas\": [{\"parcelas\": 1, \"taxaPercentual\": 2.0}, {\"parcelas\": 2, \"taxaPercentual\": 2.5}, "
+                                + "{\"parcelas\": 3, \"taxaPercentual\": 3.0}, {\"parcelas\": 4, \"taxaPercentual\": 3.5}, "
+                                + "{\"parcelas\": 5, \"taxaPercentual\": 4.0}]}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     @DisplayName("Tatuador não cadastra taxa (403)")
     @WithMockUser(roles = "TATUADOR")
     void tatuadorProibido() throws Exception {

@@ -43,6 +43,11 @@ public class TaxaOperadora {
     @Column(nullable = false)
     private boolean ativo = true;
 
+    /** Grade de taxas por parcela (obrigatória quando modalidade = CREDITO_PARCELADO). */
+    @Builder.Default
+    @OneToMany(mappedBy = "taxaOperadora", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<TaxaOperadoraParcela> parcelasTaxas = new java.util.ArrayList<>();
+
     @CreatedDate
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

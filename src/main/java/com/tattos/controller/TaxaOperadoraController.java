@@ -29,45 +29,98 @@ public class TaxaOperadoraController {
 
     private final TaxaOperadoraRepository taxaRepository;
 
+    public record TaxaOperadoraDTO(Long id, String operadora, String modalidade,
+                                   BigDecimal taxaPercentual, boolean ativo,
+                                   java.util.List<ParcelaTaxaDTO> parcelasTaxas) {
+        static TaxaOperadoraDTO from(TaxaOperadora t) {
+            return new TaxaOperadoraDTO(t.getId(), t.getOperadora(), t.getModalidade().name(),
+                    t.getTaxaPercentual(), t.isAtivo(),
+                    t.getParcelasTaxas() == null ? java.util.List.of() : t.getParcelasTaxas().stream()
+                            .map(p -> new ParcelaTaxaDTO(p.getParcelas(), p.getTaxaPercentual()))
+                            .toList());
+        }
+    }
+
+    public record ParcelaTaxaDTO(Integer parcelas, BigDecimal taxaPercentual) {}
+
+    public record ParcelaTaxaRequest(
+            @NotNull @jakarta.validation.constraints.Min(1) @jakarta.validation.constraints.Max(10) Integer parcelas,
+            @NotNull @DecimalMin("0.00") @DecimalMax("100.00") BigDecimal taxaPercentual) {}
+
     public record TaxaRequest(
             @NotBlank @jakarta.validation.constraints.Size(max = 60) String operadora,
             @NotNull ModalidadePagamento modalidade,
             @NotNull @DecimalMin("0.00") @DecimalMax("100.00") BigDecimal taxaPercentual,
-            Boolean ativo) {}
+            Boolean ativo,
+            @Valid java.util.List<ParcelaTaxaRequest> parcelas) {}
 
-    @Operation(summary = "Cadastrar taxa", description = "Única por operadora+modalidade. Edição não recalcula transações passadas.")
+    @Operation(summary = "Cadastrar taxa",
+            description = "Única por operadora+modalidade. CREDITO_PARCELADO exige a grade completa 1x–10x. Edição não recalcula transações passadas.")
     @PostMapping
     @PreAuthorize("hasRole('GESTOR')")
-    public ResponseEntity<TaxaOperadora> criar(@Valid @RequestBody TaxaRequest body) {
-        taxaRepository.findByOperadoraAndModalidade(body.operadora().trim(), body.modalidade())
+    @org.springframework.transaction.annotation.Transactional
+    public ResponseEntity<TaxaOperadoraDTO> criar(@Valid @RequestBody TaxaRequest body) {
+        String operadora = body.operadora().trim();
+        taxaRepository.findByOperadoraAndModalidade(operadora, body.modalidade())
                 .ifPresent(t -> { throw new com.tattos.exception.ConflictException(
-                        "Já existe taxa cadastrada para " + body.operadora().trim() + " / " + body.modalidade()); });
-        TaxaOperadora taxa = taxaRepository.save(TaxaOperadora.builder()
-                .operadora(body.operadora().trim())
+                        "Já existe taxa cadastrada para " + operadora + " / " + body.modalidade()); });
+
+        TaxaOperadora taxa = TaxaOperadora.builder()
+                .operadora(operadora)
                 .modalidade(body.modalidade())
                 .taxaPercentual(body.taxaPercentual())
                 .ativo(body.ativo() == null || body.ativo())
-                .build());
-        return ResponseEntity.status(HttpStatus.CREATED).body(taxa);
+                .build();
+
+        if (body.modalidade() == ModalidadePagamento.CREDITO_PARCELADO) {
+            validarGradeCompleta(body.parcelas());
+            for (ParcelaTaxaRequest p : body.parcelas()) {
+                taxa.getParcelasTaxas().add(com.tattos.model.TaxaOperadoraParcela.builder()
+                        .taxaOperadora(taxa)
+                        .parcelas(p.parcelas())
+                        .taxaPercentual(p.taxaPercentual())
+                        .build());
+            }
+        }
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(TaxaOperadoraDTO.from(taxaRepository.save(taxa)));
+    }
+
+    private void validarGradeCompleta(java.util.List<ParcelaTaxaRequest> parcelas) {
+        if (parcelas == null || parcelas.size() != 10) {
+            throw new com.tattos.exception.BusinessException(
+                    "Crédito parcelado exige a grade completa de taxas (1x a 10x).");
+        }
+        java.util.Set<Integer> numeros = new java.util.HashSet<>();
+        for (ParcelaTaxaRequest p : parcelas) {
+            numeros.add(p.parcelas());
+        }
+        if (numeros.size() != 10 || !numeros.containsAll(java.util.Set.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10))) {
+            throw new com.tattos.exception.BusinessException(
+                    "A grade deve conter exatamente as parcelas de 1x a 10x, sem repetição.");
+        }
     }
 
     @Operation(summary = "Listar taxas ativas")
     @GetMapping
     @PreAuthorize("hasRole('GESTOR')")
-    public ResponseEntity<List<TaxaOperadora>> listar() {
-        return ResponseEntity.ok(taxaRepository.findByAtivoTrue());
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public ResponseEntity<List<TaxaOperadoraDTO>> listar() {
+        return ResponseEntity.ok(taxaRepository.findByAtivoTrue().stream()
+                .map(TaxaOperadoraDTO::from).toList());
     }
 
     @Operation(summary = "Atualizar taxa", description = "Afeta apenas transações futuras (valores de transações passadas são persistidos).")
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('GESTOR')")
-    public ResponseEntity<TaxaOperadora> atualizar(@PathVariable Long id, @Valid @RequestBody TaxaRequest body) {
+    @org.springframework.transaction.annotation.Transactional
+    public ResponseEntity<TaxaOperadoraDTO> atualizar(@PathVariable Long id, @Valid @RequestBody TaxaRequest body) {
         TaxaOperadora taxa = taxaRepository.findById(id)
                 .orElseThrow(() -> new com.tattos.exception.ResourceNotFoundException("Taxa não encontrada com ID: " + id));
         taxa.setTaxaPercentual(body.taxaPercentual());
         if (body.ativo() != null) {
             taxa.setAtivo(body.ativo());
         }
-        return ResponseEntity.ok(taxaRepository.save(taxa));
+        return ResponseEntity.ok(TaxaOperadoraDTO.from(taxaRepository.save(taxa)));
     }
 }
