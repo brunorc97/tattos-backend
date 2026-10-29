@@ -106,6 +106,10 @@ public class TransacaoFinanceira {
     @PrePersist
     @PreUpdate
     public void calcularRepasse() {
+        // valor líquido sempre definido (receitas sem taxa: líquido = valor)
+        if (this.valor != null && this.valorLiquido == null) {
+            this.valorLiquido = this.valor.subtract(this.taxaValor != null ? this.taxaValor : BigDecimal.ZERO);
+        }
         if (TipoTransacao.RECEITA.equals(this.tipo) && this.tatuador != null && this.valor != null) {
             BigDecimal taxa = (this.comissaoPercentual != null && this.comissaoPercentual.compareTo(BigDecimal.ZERO) > 0)
                     ? this.comissaoPercentual

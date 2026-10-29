@@ -72,6 +72,10 @@ public class TransacaoService {
             taxaOperadora = taxaOperadoraRepository.findById(dto.getTaxaOperadoraId())
                     .orElseThrow(() -> new ResourceNotFoundException(
                             "Taxa de operadora não encontrada com ID: " + dto.getTaxaOperadoraId()));
+            if (!taxaOperadora.isAtivo()) {
+                throw new com.tattos.exception.BusinessException(
+                        "A taxa da operadora está desativada e não pode ser usada em novas transações.");
+            }
             taxaValor = dto.getValor().multiply(taxaOperadora.getTaxaPercentual())
                     .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
         }

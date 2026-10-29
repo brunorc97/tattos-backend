@@ -39,9 +39,9 @@ public class TaxaOperadoraController {
     @PostMapping
     @PreAuthorize("hasRole('GESTOR')")
     public ResponseEntity<TaxaOperadora> criar(@Valid @RequestBody TaxaRequest body) {
-        taxaRepository.findByOperadoraAndModalidade(body.operadora(), body.modalidade())
+        taxaRepository.findByOperadoraAndModalidade(body.operadora().trim(), body.modalidade())
                 .ifPresent(t -> { throw new com.tattos.exception.ConflictException(
-                        "Já existe taxa cadastrada para " + body.operadora() + " / " + body.modalidade()); });
+                        "Já existe taxa cadastrada para " + body.operadora().trim() + " / " + body.modalidade()); });
         TaxaOperadora taxa = taxaRepository.save(TaxaOperadora.builder()
                 .operadora(body.operadora().trim())
                 .modalidade(body.modalidade())
