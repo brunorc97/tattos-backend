@@ -66,6 +66,23 @@ public interface AgendamentoRepository extends JpaRepository<Agendamento, Long> 
             @Param("dataFim") LocalDateTime dataFim,
             Pageable pageable);
 
+    @Query("SELECT a FROM Agendamento a WHERE " +
+           "(:tatuadorId IS NULL OR a.tatuador.id = :tatuadorId) AND " +
+           "(:clienteId IS NULL OR a.cliente.id = :clienteId) AND " +
+           "(:status IS NULL OR a.status = :status) AND " +
+           "(:cabine IS NULL OR a.cabine = :cabine) AND " +
+           "(:dataInicio IS NULL OR a.dataHora >= :dataInicio) AND " +
+           "(:dataFim IS NULL OR a.dataHora <= :dataFim) " +
+           "ORDER BY a.dataHora ASC")
+    Page<Agendamento> findComFiltrosECabinePaginado(
+            @Param("tatuadorId") Long tatuadorId,
+            @Param("clienteId") Long clienteId,
+            @Param("status") StatusAgendamento status,
+            @Param("cabine") String cabine,
+            @Param("dataInicio") LocalDateTime dataInicio,
+            @Param("dataFim") LocalDateTime dataFim,
+            Pageable pageable);
+
     /**
      * Verifica se existe conflito de horário para o tatuador no intervalo informado.
      * Considera conflito quando: inicio < existenteFim E fim > existenteInicio.

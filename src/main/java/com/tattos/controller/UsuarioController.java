@@ -58,6 +58,14 @@ public class UsuarioController {
         return ResponseEntity.ok(tatuadores);
     }
 
+    @GetMapping("/tatuadores/sugerir")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<UsuarioResponseDTO>> sugerirPorEstilo(@RequestParam String estilo) {
+        return ResponseEntity.ok(usuarioRepository
+                .findTatuadoresPorEstilo(com.tattos.model.enums.UserRole.ROLE_TATUADOR, estilo.trim())
+                .stream().map(UsuarioResponseDTO::fromEntity).toList());
+    }
+
     @GetMapping("/clientes")
     @PreAuthorize("hasAnyRole('GESTOR','TATUADOR')")
     public ResponseEntity<org.springframework.data.domain.Page<UsuarioResponseDTO>> listarClientes(

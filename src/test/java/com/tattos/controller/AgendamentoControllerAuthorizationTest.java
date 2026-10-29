@@ -41,7 +41,7 @@ class AgendamentoControllerAuthorizationTest {
 
     @Test
     void clientListIsAlwaysRestrictedToAuthenticatedClient() throws Exception {
-        when(agendamentoService.listarPaginado(any(), any(), any(), any(), any()))
+        when(agendamentoService.listarComEscopo(any(), any(), any(), any(), any(), any(Boolean.class), any(), any()))
                 .thenReturn(org.springframework.data.domain.Page.empty());
 
         mockMvc.perform(get("/api/v1/agendamentos")
@@ -49,7 +49,8 @@ class AgendamentoControllerAuthorizationTest {
                         .with(authenticatedClient(11L)))
                 .andExpect(status().isOk());
 
-        verify(agendamentoService).listarPaginado(isNull(), eq(11L), isNull(), isNull(), any());
+        // clienteId do body é substituído pelo do token (11L) no service
+        verify(agendamentoService).listarComEscopo(isNull(), eq(22L), isNull(), isNull(), isNull(), eq(false), any(), any());
     }
 
     @Test

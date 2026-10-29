@@ -50,12 +50,11 @@ public class AgendamentoController {
             @Parameter(description = "Filtrar por status")         @RequestParam(required = false) StatusAgendamento status,
             @Parameter(description = "Filtrar por data (ISO)")     @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data,
+            @Parameter(description = "Filtrar por cabine/bancada") @RequestParam(required = false) String cabine,
+            @Parameter(description = "Somente agendamentos futuros") @RequestParam(required = false, defaultValue = "false") boolean futuras,
             @PageableDefault(size = 20, sort = "dataHora") Pageable pageable,
             @AuthenticationPrincipal Usuario usuario) {
-        if (usuario != null && usuario.isCliente()) {
-            clienteId = usuario.getId();
-        }
-        return ResponseEntity.ok(agendamentoService.listarPaginado(tatuadorId, clienteId, status, data, pageable));
+        return ResponseEntity.ok(agendamentoService.listarComEscopo(tatuadorId, clienteId, status, data, cabine, futuras, usuario, pageable));
     }
 
     @Operation(summary = "Buscar agendamento por ID")

@@ -79,6 +79,9 @@ public class SecurityConfig {
                 .requestMatchers("/api/agendamentos/**", "/api/appointments/**", "/api/sessions/**",
                         "/api/v1/agendamentos/**", "/api/v1/appointments/**", "/api/v1/sessions/**").hasAnyRole("GESTOR", "TATUADOR", "CLIENTE")
 
+                // Solicitações de agendamento (cliente cria; estúdio decide)
+                .requestMatchers("/api/v1/solicitacoes-agendamento/**").hasAnyRole("GESTOR", "TATUADOR", "CLIENTE")
+
                 // Módulos Operacionais: Projetos, Orçamentos, Kanban e Aftercare
                 .requestMatchers("/api/projetos/**", "/api/orcamentos/**", "/api/kanban-cards/**", "/api/aftercare/**",
                         "/api/v1/projetos/**", "/api/v1/projects/**", "/api/v1/orcamentos/**", "/api/v1/budgets/**",

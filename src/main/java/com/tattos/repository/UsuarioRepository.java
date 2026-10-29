@@ -28,6 +28,10 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     @Query("SELECT u FROM Usuario u WHERE u.role = com.tattos.model.enums.UserRole.ROLE_TATUADOR AND u.ativo = true")
     List<Usuario> findTatuadoresAtivos();
 
+    @Query("SELECT u FROM Usuario u WHERE u.role = :role AND u.ativo = true "
+            + "AND LOWER(u.especialidade) LIKE LOWER(CONCAT('%', :estilo, '%'))")
+    List<Usuario> findTatuadoresPorEstilo(@Param("role") UserRole role, @Param("estilo") String estilo);
+
     @Query("SELECT u FROM Usuario u WHERE u.role = com.tattos.model.enums.UserRole.ROLE_CLIENTE AND u.ativo = true")
     List<Usuario> findClientesAtivos();
 

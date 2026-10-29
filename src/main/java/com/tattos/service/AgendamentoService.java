@@ -215,6 +215,26 @@ public class AgendamentoService {
                 .map(AgendamentoResponseDTO::fromEntity);
     }
 
+    /**
+     * Listagem com escopo por role: TATUADOR sempre vê a própria agenda
+     * (parâmetro tatuadorId alheio é ignorado); futuras=true corta o passado.
+     */
+    @Transactional(readOnly = true)
+    public Page<AgendamentoResponseDTO> listarComEscopo(Long tatuadorId, Long clienteId, StatusAgendamento status,
+                                                        LocalDate data, String cabine, boolean futuras,
+                                                        Usuario logado, Pageable pageable) {
+        if (logado != null && logado.isTatuador()) {
+            tatuadorId = logado.getId();
+        } else if (logado != null && logado.isCliente()) {
+            clienteId = logado.getId();
+        }
+        LocalDateTime dataInicio = data != null ? data.atStartOfDay()
+                : futuras ? LocalDateTime.now() : null;
+        LocalDateTime dataFim = data != null ? data.atTime(LocalTime.MAX) : null;
+        return agendamentoRepository.findComFiltrosECabinePaginado(tatuadorId, clienteId, status, cabine, dataInicio, dataFim, pageable)
+                .map(AgendamentoResponseDTO::fromEntity);
+    }
+
     @Transactional
     public void deletar(Long id) {
         if (!agendamentoRepository.existsById(id)) {
