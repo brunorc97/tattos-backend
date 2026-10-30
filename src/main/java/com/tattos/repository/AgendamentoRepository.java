@@ -60,8 +60,7 @@ public interface AgendamentoRepository extends JpaRepository<Agendamento, Long> 
            "(:clienteId IS NULL OR a.cliente.id = :clienteId) AND " +
            "(:status IS NULL OR a.status = :status) AND " +
            "(:dataInicio IS NULL OR a.dataHora >= :dataInicio) AND " +
-           "(:dataFim IS NULL OR a.dataHora <= :dataFim) " +
-           "ORDER BY a.dataHora ASC")
+           "(:dataFim IS NULL OR a.dataHora <= :dataFim)")
     Page<Agendamento> findComFiltrosPaginado(
             @Param("tatuadorId") Long tatuadorId,
             @Param("clienteId") Long clienteId,
@@ -76,8 +75,7 @@ public interface AgendamentoRepository extends JpaRepository<Agendamento, Long> 
            "(:status IS NULL OR a.status = :status) AND " +
            "(:cabine IS NULL OR a.cabine = :cabine) AND " +
            "(:dataInicio IS NULL OR a.dataHora >= :dataInicio) AND " +
-           "(:dataFim IS NULL OR a.dataHora <= :dataFim) " +
-           "ORDER BY a.dataHora ASC")
+           "(:dataFim IS NULL OR a.dataHora <= :dataFim)")
     Page<Agendamento> findComFiltrosECabinePaginado(
             @Param("tatuadorId") Long tatuadorId,
             @Param("clienteId") Long clienteId,
