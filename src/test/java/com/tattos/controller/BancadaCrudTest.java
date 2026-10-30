@@ -127,4 +127,42 @@ class BancadaCrudTest {
         mockMvc.perform(delete("/api/v1/bancadas/" + id))
                 .andExpect(status().isBadRequest());
     }
+
+    @Test
+    @DisplayName("Deletar bancada renomeada com agendamento futuro vinculado por bancada_id retorna 400 (nao 500)")
+    @WithMockUser(roles = "GESTOR")
+    void deletarRenomeadaComAgendamentoVinculado() throws Exception {
+        Cliente cliente = (Cliente) usuarioRepository.save(Cliente.builder()
+                .nome("Cli R").email("clir@tattos.com").senha("h").ativo(true).build());
+        Tatuador tatuador = (Tatuador) usuarioRepository.save(Tatuador.builder()
+                .nome("Tat R").email("tatr@tattos.com").senha("h")
+                .comissaoPercentual(new BigDecimal("60")).ativo(true).build());
+
+        mockMvc.perform(post("/api/v1/bancadas")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nome\": \"Cabine Y\"}"))
+                .andExpect(status().isCreated());
+        com.tattos.model.Bancada b = bancadaRepository.findAll().get(0);
+
+        // agendamento vinculado por bancada_id com nome antigo em cabine
+        agendamentoRepository.save(Agendamento.builder()
+                .cliente(cliente).tatuador(tatuador).cabine("Cabine Y").bancada(b)
+                .dataHora(LocalDateTime.now().plusDays(5)).valor(new BigDecimal("500")).build());
+
+        // renomeia: cabine do agendamento fica com o nome antigo
+        b.setNome("Cabine Y Renomeada");
+        bancadaRepository.save(b);
+
+        mockMvc.perform(delete("/api/v1/bancadas/" + b.getId()))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("Disponibilidade sem bancadaId e sem cabine retorna 400")
+    @WithMockUser(roles = "GESTOR")
+    void disponibilidadeSemParametrosRetorna400() throws Exception {
+        mockMvc.perform(get("/api/v1/bancadas/disponibilidade")
+                        .param("data", java.time.LocalDate.now().toString()))
+                .andExpect(status().isBadRequest());
+    }
 }

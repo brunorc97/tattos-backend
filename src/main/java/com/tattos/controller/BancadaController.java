@@ -79,6 +79,9 @@ public class BancadaController {
         if (bancadaId != null) {
             return ResponseEntity.ok(bancadaService.disponibilidade(bancadaId, data));
         }
+        if (cabine == null || cabine.isBlank()) {
+            throw new com.tattos.exception.BusinessException("Informe bancadaId ou cabine.");
+        }
         return ResponseEntity.ok(bancadaService.disponibilidade(cabine, data));
     }
 }

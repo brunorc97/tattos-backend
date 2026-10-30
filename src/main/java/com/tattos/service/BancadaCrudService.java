@@ -68,7 +68,8 @@ public class BancadaCrudService {
         boolean ocupadaNoFuturo = agendamentoRepository.findComFiltros(null, null, null,
                 LocalDateTime.now(), null).stream()
                 .filter(a -> a.getStatus() != StatusAgendamento.CANCELADO)
-                .anyMatch(a -> b.getNome().equalsIgnoreCase(a.getCabine()));
+                .anyMatch(a -> b.getNome().equalsIgnoreCase(a.getCabine())
+                        || (a.getBancada() != null && a.getBancada().getId().equals(id)));
         if (ocupadaNoFuturo) {
             throw new BusinessException("A bancada '" + b.getNome() + "' possui agendamentos futuros e não pode ser removida.");
         }

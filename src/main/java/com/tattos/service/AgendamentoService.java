@@ -321,9 +321,15 @@ public class AgendamentoService {
         if (agendamentoRepository.existeConflitoTatuador(tatuadorId, inicio, fim, id)) {
             throw new ConflictException("Conflito de agenda: o tatuador já possui agendamento confirmado neste intervalo.");
         }
-        boolean conflitoEspaco = bancada != null
-                ? agendamentoRepository.existeConflitoBancada(bancada.getId(), inicio, fim, id)
-                : agendamentoRepository.existeConflitoCabine(cabine.trim(), inicio, fim, id);
+        boolean conflitoEspaco;
+        if (bancada != null) {
+            // cobre tanto vínculos por bancada_id quanto agendamentos legados
+            // (cabine-only) que ocupam o mesmo espaço físico
+            conflitoEspaco = agendamentoRepository.existeConflitoBancada(bancada.getId(), inicio, fim, id)
+                    || agendamentoRepository.existeConflitoCabine(bancada.getNome(), inicio, fim, id);
+        } else {
+            conflitoEspaco = agendamentoRepository.existeConflitoCabine(cabine.trim(), inicio, fim, id);
+        }
         if (conflitoEspaco) {
             throw new ConflictException("Conflito de espaço: a cabine '" + cabine.trim() + "' já está ocupada neste intervalo.");
         }

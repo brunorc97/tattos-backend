@@ -110,4 +110,17 @@ class AgendamentoConflitoBancadaTest {
         assertThrows(ConflictException.class,
                 () -> agendamentoService.criar(dto(tatB, b1, inicio.plusMinutes(30))));
     }
+
+    @Test
+    @DisplayName("Reserva por bancadaId detecta agendamento legado (cabine-only) no mesmo espaco")
+    void reservaPorBancadaDetectaLegadoCabine() {
+        // legado: mesmo espaço físico (cabine = nome da bancada), sem bancada_id
+        agendamentoService.criar(AgendamentoRequestDTO.builder()
+                .clienteId(cliente.getId()).tatuadorId(tatA.getId())
+                .dataHora(inicio).duracaoMinutos(120)
+                .cabine("Bancada 1").valor(new BigDecimal("500.00")).build());
+
+        assertThrows(ConflictException.class,
+                () -> agendamentoService.criar(dto(tatB, b1, inicio.plusMinutes(30))));
+    }
 }
