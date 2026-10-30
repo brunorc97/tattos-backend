@@ -113,4 +113,18 @@ public interface AgendamentoRepository extends JpaRepository<Agendamento, Long> 
             @Param("inicio") LocalDateTime inicio,
             @Param("fim") LocalDateTime fim,
             @Param("id") Long id);
+
+    /**
+     * Verifica se a bancada já está ocupada no intervalo informado (por id,
+     * robusto a renomeação da bancada).
+     */
+    @Query("SELECT COUNT(a) > 0 FROM Agendamento a WHERE a.status != com.tattos.model.enums.StatusAgendamento.CANCELADO " +
+           "AND (:id IS NULL OR a.id != :id) " +
+           "AND a.bancada.id = :bancadaId " +
+           "AND (a.dataHora < :fim AND a.dataHoraFim > :inicio)")
+    boolean existeConflitoBancada(
+            @Param("bancadaId") Long bancadaId,
+            @Param("inicio") LocalDateTime inicio,
+            @Param("fim") LocalDateTime fim,
+            @Param("id") Long id);
 }

@@ -65,7 +65,7 @@ public class AgendamentoService {
         validarJanelaHorario(inicio, fim);
         com.tattos.model.Bancada bancada = resolverBancada(dto.getBancadaId());
         String cabineEfetiva = bancada != null ? bancada.getNome() : dto.getCabine().trim();
-        validarConflitos(tatuador.getId(), cabineEfetiva, inicio, fim, null);
+        validarConflitos(tatuador.getId(), cabineEfetiva, bancada, inicio, fim, null);
         BigDecimal desconto = calcularDescontoIndicacao(dto.getCodigoIndicacao(), cliente.getId(), dto.getValor());
         // cupom de desconto (promoção): soma ao da indicação, nunca além do valor do procedimento
         com.tattos.model.Cupom cupom = null;
@@ -192,7 +192,7 @@ public class AgendamentoService {
         validarJanelaHorario(inicio, fim);
         com.tattos.model.Bancada bancada = resolverBancada(dto.getBancadaId());
         String cabineEfetiva = bancada != null ? bancada.getNome() : dto.getCabine().trim();
-        validarConflitos(tatuador.getId(), cabineEfetiva, inicio, fim, id);
+        validarConflitos(tatuador.getId(), cabineEfetiva, bancada, inicio, fim, id);
         agendamento.setCliente(cliente);
         agendamento.setTatuador(tatuador);
         agendamento.setDataHora(inicio);
@@ -312,10 +312,19 @@ public class AgendamentoService {
         }
     }
 
-    private void validarConflitos(Long tatuadorId, String cabine, LocalDateTime inicio, LocalDateTime fim, Long id) {        if (agendamentoRepository.existeConflitoTatuador(tatuadorId, inicio, fim, id)) {
+    private void validarConflitos(Long tatuadorId, String cabine, LocalDateTime inicio, LocalDateTime fim, Long id) {
+        validarConflitos(tatuadorId, cabine, null, inicio, fim, id);
+    }
+
+    private void validarConflitos(Long tatuadorId, String cabine, com.tattos.model.Bancada bancada,
+                                  LocalDateTime inicio, LocalDateTime fim, Long id) {
+        if (agendamentoRepository.existeConflitoTatuador(tatuadorId, inicio, fim, id)) {
             throw new ConflictException("Conflito de agenda: o tatuador já possui agendamento confirmado neste intervalo.");
         }
-        if (agendamentoRepository.existeConflitoCabine(cabine.trim(), inicio, fim, id)) {
+        boolean conflitoEspaco = bancada != null
+                ? agendamentoRepository.existeConflitoBancada(bancada.getId(), inicio, fim, id)
+                : agendamentoRepository.existeConflitoCabine(cabine.trim(), inicio, fim, id);
+        if (conflitoEspaco) {
             throw new ConflictException("Conflito de espaço: a cabine '" + cabine.trim() + "' já está ocupada neste intervalo.");
         }
     }
