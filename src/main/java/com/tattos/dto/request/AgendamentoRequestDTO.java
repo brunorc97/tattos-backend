@@ -36,6 +36,8 @@ public class AgendamentoRequestDTO {
     @NotBlank(message = "{validation.cabine.required}")
         @Schema(example = "A1")private String cabine;
 
+    @Schema(example = "1")private Long bancadaId;
+
     @NotNull(message = "{validation.procedimento.valor.required}")
         @Schema(example = "1500.00")private BigDecimal valor;
 

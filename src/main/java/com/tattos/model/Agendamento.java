@@ -44,6 +44,11 @@ public class Agendamento {
     @Column(nullable = false, length = 50)
     private String cabine;
 
+    /** Bancada cadastrada (preferencial); `cabine` legado é sincronizado com o nome dela. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "bancada_id")
+    private Bancada bancada;
+
     @Builder.Default
     @NotNull(message = "O status do agendamento é obrigatório")
     @Enumerated(EnumType.STRING)

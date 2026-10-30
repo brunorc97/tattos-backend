@@ -22,6 +22,8 @@ public class AgendamentoResponseDTO {
     private LocalDateTime dataHoraFim;
     private Integer duracaoMinutos;
     private String cabine;
+    private Long bancadaId;
+    private String bancadaNome;
     private StatusAgendamento status;
     private BigDecimal valor;
     private BigDecimal valorSinal;
@@ -59,6 +61,8 @@ public class AgendamentoResponseDTO {
                 .dataHoraFim(a.getDataHoraFim())
                 .duracaoMinutos(a.getDuracaoMinutos())
                 .cabine(a.getCabine())
+                .bancadaId(a.getBancada() != null ? a.getBancada().getId() : null)
+                .bancadaNome(a.getBancada() != null ? a.getBancada().getNome() : null)
                 .status(a.getStatus())
                 .valor(valorBase)
                 .valorSinal(a.getValorSinal())

@@ -35,6 +35,20 @@ public class AgendamentoService {
     private final UsuarioRepository usuarioRepository;
     private final org.springframework.context.ApplicationEventPublisher eventPublisher;
     private final com.tattos.service.CupomService cupomService;
+    private final com.tattos.repository.BancadaRepository bancadaRepository;
+
+    /** Resolve e valida a bancada do DTO; devolve null quando não informada (fluxo legado por cabine). */
+    private com.tattos.model.Bancada resolverBancada(Long bancadaId) {
+        if (bancadaId == null) {
+            return null;
+        }
+        com.tattos.model.Bancada bancada = bancadaRepository.findById(bancadaId)
+                .orElseThrow(() -> new BusinessException("Bancada não encontrada com ID: " + bancadaId));
+        if (!bancada.isAtiva()) {
+            throw new BusinessException("A bancada '" + bancada.getNome() + "' está inativa.");
+        }
+        return bancada;
+    }
 
     @Transactional
     public AgendamentoResponseDTO criar(AgendamentoRequestDTO dto) {
@@ -49,7 +63,9 @@ public class AgendamentoService {
         int duracao = (dto.getDuracaoMinutos() != null && dto.getDuracaoMinutos() > 0) ? dto.getDuracaoMinutos() : 60;
         LocalDateTime fim = inicio.plusMinutes(duracao);
         validarJanelaHorario(inicio, fim);
-        validarConflitos(tatuador.getId(), dto.getCabine(), inicio, fim, null);
+        com.tattos.model.Bancada bancada = resolverBancada(dto.getBancadaId());
+        String cabineEfetiva = bancada != null ? bancada.getNome() : dto.getCabine().trim();
+        validarConflitos(tatuador.getId(), cabineEfetiva, inicio, fim, null);
         BigDecimal desconto = calcularDescontoIndicacao(dto.getCodigoIndicacao(), cliente.getId(), dto.getValor());
         // cupom de desconto (promoção): soma ao da indicação, nunca além do valor do procedimento
         com.tattos.model.Cupom cupom = null;
@@ -68,7 +84,8 @@ public class AgendamentoService {
                 .dataHora(inicio)
                 .duracaoMinutos(duracao)
                 .dataHoraFim(fim)
-                .cabine(dto.getCabine().trim())
+                .cabine(cabineEfetiva)
+                .bancada(bancada)
                 .status(StatusAgendamento.AGENDADO)
                 .valor(dto.getValor())
                 .valorSinal(sinal)
@@ -173,13 +190,16 @@ public class AgendamentoService {
         int duracao = (dto.getDuracaoMinutos() != null && dto.getDuracaoMinutos() > 0) ? dto.getDuracaoMinutos() : 60;
         LocalDateTime fim = inicio.plusMinutes(duracao);
         validarJanelaHorario(inicio, fim);
-        validarConflitos(tatuador.getId(), dto.getCabine(), inicio, fim, id);
+        com.tattos.model.Bancada bancada = resolverBancada(dto.getBancadaId());
+        String cabineEfetiva = bancada != null ? bancada.getNome() : dto.getCabine().trim();
+        validarConflitos(tatuador.getId(), cabineEfetiva, inicio, fim, id);
         agendamento.setCliente(cliente);
         agendamento.setTatuador(tatuador);
         agendamento.setDataHora(inicio);
         agendamento.setDuracaoMinutos(duracao);
         agendamento.setDataHoraFim(fim);
-        agendamento.setCabine(dto.getCabine().trim());
+        agendamento.setCabine(cabineEfetiva);
+        agendamento.setBancada(bancada);
         agendamento.setValor(dto.getValor());
         agendamento.setValorSinal(dto.getValorSinal());
         if (dto.getCodigoIndicacao() != null && !dto.getCodigoIndicacao().trim().isEmpty()) {
