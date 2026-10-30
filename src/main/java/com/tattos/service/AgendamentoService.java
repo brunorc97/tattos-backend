@@ -248,6 +248,24 @@ public class AgendamentoService {
                 .map(AgendamentoResponseDTO::fromEntity);
     }
 
+    @Transactional(readOnly = true)
+    public java.util.List<AgendamentoResponseDTO> agendaPorPeriodo(java.time.LocalDate inicio, java.time.LocalDate fim, Usuario logado) {
+        if (inicio == null || fim == null || inicio.isAfter(fim)) {
+            throw new BusinessException("Período inválido: 'inicio' e 'fim' são obrigatórios e inicio deve ser menor ou igual a fim.");
+        }
+        Long tatuadorId = null;
+        Long clienteId = null;
+        if (logado != null && logado.isTatuador()) {
+            tatuadorId = logado.getId();
+        } else if (logado != null && logado.isCliente()) {
+            clienteId = logado.getId();
+        }
+        return agendamentoRepository.findComFiltros(tatuadorId, clienteId, null,
+                        inicio.atStartOfDay(), fim.atTime(java.time.LocalTime.MAX)).stream()
+                .map(AgendamentoResponseDTO::fromEntity)
+                .toList();
+    }
+
     @Transactional
     public void deletar(Long id) {
         if (!agendamentoRepository.existsById(id)) {

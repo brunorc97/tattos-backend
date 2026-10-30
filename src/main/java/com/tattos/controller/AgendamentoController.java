@@ -57,6 +57,18 @@ public class AgendamentoController {
         return ResponseEntity.ok(agendamentoService.listarComEscopo(tatuadorId, clienteId, status, data, cabine, futuras, usuario, pageable));
     }
 
+    @Operation(summary = "Agenda consolidada por período",
+            description = "Lista agendamentos entre inicio e fim (obrigatórios), ordenados por dataHora. Tatuador vê a própria agenda; cliente, as próprias sessões.")
+    @ApiResponse(responseCode = "200", description = "Agenda do período")
+    @GetMapping("/agenda")
+    @PreAuthorize("hasAnyRole('GESTOR','TATUADOR','CLIENTE')")
+    public ResponseEntity<java.util.List<AgendamentoResponseDTO>> agenda(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fim,
+            @AuthenticationPrincipal Usuario usuario) {
+        return ResponseEntity.ok(agendamentoService.agendaPorPeriodo(inicio, fim, usuario));
+    }
+
     @Operation(summary = "Buscar agendamento por ID")
     @ApiResponse(responseCode = "200", description = "Agendamento encontrado")
     @ApiResponse(responseCode = "404", description = "Agendamento não encontrado")
