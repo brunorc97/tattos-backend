@@ -1,12 +1,16 @@
 package com.tattos.service;
 
+import com.tattos.dto.request.EntradaEstoqueDTO;
 import com.tattos.dto.request.InsumoRequestDTO;
 import com.tattos.dto.response.InsumoResponseDTO;
 import com.tattos.exception.BusinessException;
 import com.tattos.exception.ConflictException;
 import com.tattos.exception.ResourceNotFoundException;
 import com.tattos.model.Insumo;
+import com.tattos.model.MovimentacaoEstoque;
+import com.tattos.model.enums.TipoMovimentacao;
 import com.tattos.repository.InsumoRepository;
+import com.tattos.repository.MovimentacaoEstoqueRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,6 +25,7 @@ import java.util.List;
 public class InsumoService {
 
     private final InsumoRepository insumoRepository;
+    private final MovimentacaoEstoqueRepository movimentacaoRepository;
 
     @Transactional(readOnly = true)
     public List<InsumoResponseDTO> verificarEstoque() {
@@ -35,6 +40,34 @@ public class InsumoService {
                 .orElseThrow(() -> new ResourceNotFoundException("Insumo não encontrado com ID: " + insumoId));
 
         insumo.adicionarEstoque(quantidade);
+        Insumo salvo = insumoRepository.save(insumo);
+        return InsumoResponseDTO.fromEntity(salvo);
+    }
+
+    /**
+     * Entrada com custo: grava a movimentação e, quando o custo é informado,
+     * recalcula o valor unitário como média simples dos custos de entrada.
+     */
+    @Transactional
+    public InsumoResponseDTO registrarEntrada(Long insumoId, EntradaEstoqueDTO dto) {
+        Insumo insumo = insumoRepository.findById(insumoId)
+                .orElseThrow(() -> new ResourceNotFoundException("Insumo não encontrado com ID: " + insumoId));
+
+        insumo.adicionarEstoque(dto.getQuantidade());
+        movimentacaoRepository.save(MovimentacaoEstoque.builder()
+                .insumo(insumo)
+                .tipo(TipoMovimentacao.ENTRADA)
+                .quantidade(dto.getQuantidade())
+                .custoUnitario(dto.getCustoUnitario())
+                .motivo(dto.getMotivo())
+                .build());
+
+        if (dto.getCustoUnitario() != null) {
+            java.math.BigDecimal media = movimentacaoRepository.mediaCustosEntrada(insumoId);
+            if (media != null) {
+                insumo.setValorUnitario(media.setScale(2, java.math.RoundingMode.HALF_UP));
+            }
+        }
         Insumo salvo = insumoRepository.save(insumo);
         return InsumoResponseDTO.fromEntity(salvo);
     }

@@ -1,9 +1,11 @@
 package com.tattos.service;
 
+import com.tattos.dto.request.EntradaEstoqueDTO;
 import com.tattos.dto.request.InsumoRequestDTO;
 import com.tattos.dto.response.InsumoResponseDTO;
 import com.tattos.exception.BusinessException;
 import com.tattos.repository.InsumoRepository;
+import com.tattos.repository.MovimentacaoEstoqueRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -101,5 +103,54 @@ class InsumoServiceTest {
         assertEquals(2, criticos.size());
         assertTrue(criticos.stream().anyMatch(i -> i.getNome().equals("Tinta Preto Tribal")));
         assertTrue(criticos.stream().anyMatch(i -> i.getNome().equals("Agulha 09RS")));
+    }
+
+    @Autowired
+    private MovimentacaoEstoqueRepository movimentacaoRepository;
+
+    private Long insumoSemCusto() {
+        return insumoService.criar(InsumoRequestDTO.builder()
+                .nome("Bico Descartável").quantidadeAtual(0).nivelCritico(1)
+                .unidadeMedida("UN").build()).getId();
+    }
+
+    @Test
+    @DisplayName("Entrada com custo atualiza valor unitario com a media simples dos custos")
+    void entradaComCustoAtualizaMediaSimples() {
+        Long id = insumoSemCusto();
+
+        insumoService.registrarEntrada(id, EntradaEstoqueDTO.builder()
+                .quantidade(10).custoUnitario(new BigDecimal("2.00")).build());
+        insumoService.registrarEntrada(id, EntradaEstoqueDTO.builder()
+                .quantidade(10).custoUnitario(new BigDecimal("4.00")).build());
+
+        InsumoResponseDTO dto = insumoService.buscarPorId(id);
+        assertEquals(20, dto.getQuantidadeAtual());
+        assertEquals(0, new BigDecimal("3.00").compareTo(dto.getValorUnitario()));
+        assertEquals(2, movimentacaoRepository.findByInsumoIdOrderByCreatedAtDesc(id).size());
+    }
+
+    @Test
+    @DisplayName("Entrada sem custo nao derruba a media existente")
+    void entradaSemCustoNaoDerrubaMedia() {
+        Long id = insumoSemCusto();
+        insumoService.registrarEntrada(id, EntradaEstoqueDTO.builder()
+                .quantidade(10).custoUnitario(new BigDecimal("3.00")).build());
+
+        insumoService.registrarEntrada(id, EntradaEstoqueDTO.builder().quantidade(5).build());
+
+        InsumoResponseDTO dto = insumoService.buscarPorId(id);
+        assertEquals(15, dto.getQuantidadeAtual());
+        assertEquals(0, new BigDecimal("3.00").compareTo(dto.getValorUnitario()));
+    }
+
+    @Test
+    @DisplayName("Primeira entrada com custo define a media")
+    void primeiraEntradaDefineMedia() {
+        Long id = insumoSemCusto();
+        insumoService.registrarEntrada(id, EntradaEstoqueDTO.builder()
+                .quantidade(4).custoUnitario(new BigDecimal("7.50")).build());
+
+        assertEquals(0, new BigDecimal("7.50").compareTo(insumoService.buscarPorId(id).getValorUnitario()));
     }
 }
