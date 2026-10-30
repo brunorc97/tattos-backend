@@ -35,6 +35,16 @@ public class ProjetoController {
         return ResponseEntity.ok(projetoService.listarComEscopo(tatuadorId, statusAprovacao, clienteId, usuario));
     }
 
+    @Operation(summary = "Fila de projetos",
+            description = "Projetos ordenados com pendentes primeiro, depois os mais antigos. Tatuador vê apenas os seus; gestor pode filtrar por tatuadorId.")
+    @GetMapping("/fila")
+    @PreAuthorize("hasAnyRole('GESTOR','TATUADOR')")
+    public ResponseEntity<List<ProjetoResponseDTO>> fila(
+            @RequestParam(required = false) Long tatuadorId,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.tattos.model.Usuario usuario) {
+        return ResponseEntity.ok(projetoService.fila(tatuadorId, usuario));
+    }
+
     @Operation(summary = "Criar projeto")
     @PostMapping
     @PreAuthorize("hasRole('GESTOR')")

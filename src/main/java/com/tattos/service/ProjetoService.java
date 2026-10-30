@@ -55,6 +55,16 @@ public class ProjetoService {
      * dele; GESTOR filtra livremente por tatuador/status/cliente.
      */
     @Transactional(readOnly = true)
+    public List<ProjetoResponseDTO> fila(Long tatuadorId, com.tattos.model.Usuario logado) {
+        if (logado != null && logado.isTatuador()) {
+            tatuadorId = logado.getId();
+        }
+        return projetoRepository.filaPorTatuador(tatuadorId).stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public List<ProjetoResponseDTO> listarComEscopo(Long tatuadorId, String statusAprovacao,
                                                     Long clienteId, com.tattos.model.Usuario logado) {
         if (logado != null && logado.isTatuador()) {
