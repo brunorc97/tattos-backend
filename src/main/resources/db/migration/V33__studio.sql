@@ -18,9 +18,9 @@ CREATE TABLE trabalho (
     foto_url VARCHAR(500) NULL,
     data DATE NOT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_trabalho_tatuador FOREIGN KEY (tatuador_id) REFERENCES usuarios(id),
-    CONSTRAINT fk_trabalho_cliente FOREIGN KEY (cliente_id) REFERENCES usuarios(id),
-    CONSTRAINT fk_trabalho_realizado FOREIGN KEY (trabalho_realizado_id) REFERENCES trabalhos_realizados(id)
+    CONSTRAINT fk_trabalho_studio_tatuador FOREIGN KEY (tatuador_id) REFERENCES usuarios(id),
+    CONSTRAINT fk_trabalho_studio_cliente FOREIGN KEY (cliente_id) REFERENCES usuarios(id),
+    CONSTRAINT fk_trabalho_studio_realizado FOREIGN KEY (trabalho_realizado_id) REFERENCES trabalhos_realizados(id)
 );
 
 CREATE TABLE ideia_tatuagem (
