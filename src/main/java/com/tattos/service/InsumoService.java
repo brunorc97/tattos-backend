@@ -26,6 +26,7 @@ public class InsumoService {
 
     private final InsumoRepository insumoRepository;
     private final MovimentacaoEstoqueRepository movimentacaoRepository;
+    private final com.tattos.repository.UsuarioRepository usuarioRepository;
 
     @Transactional(readOnly = true)
     public List<InsumoResponseDTO> verificarEstoque() {
@@ -68,6 +69,33 @@ public class InsumoService {
                 insumo.setValorUnitario(media.setScale(2, java.math.RoundingMode.HALF_UP));
             }
         }
+        Insumo salvo = insumoRepository.save(insumo);
+        return InsumoResponseDTO.fromEntity(salvo);
+    }
+
+    /**
+     * Saída com responsável: valida saldo e quem retirou (tatuador ou gestor
+     * ativo) antes de gravar a movimentação.
+     */
+    @Transactional
+    public InsumoResponseDTO registrarSaida(Long insumoId, com.tattos.dto.request.SaidaEstoqueDTO dto) {
+        Insumo insumo = insumoRepository.findById(insumoId)
+                .orElseThrow(() -> new ResourceNotFoundException("Insumo não encontrado com ID: " + insumoId));
+
+        com.tattos.model.Usuario retiradoPor = usuarioRepository.findById(dto.getRetiradoPorId())
+                .filter(com.tattos.model.Usuario::isAtivo)
+                .filter(u -> u.isTatuador() || u.isGestor())
+                .orElseThrow(() -> new BusinessException(
+                        "Responsável pela retirada inválido: deve ser um tatuador ou gestor ativo."));
+
+        insumo.removerEstoque(dto.getQuantidade());
+        movimentacaoRepository.save(MovimentacaoEstoque.builder()
+                .insumo(insumo)
+                .tipo(TipoMovimentacao.SAIDA)
+                .quantidade(dto.getQuantidade())
+                .retiradoPor(retiradoPor)
+                .motivo(dto.getMotivo())
+                .build());
         Insumo salvo = insumoRepository.save(insumo);
         return InsumoResponseDTO.fromEntity(salvo);
     }

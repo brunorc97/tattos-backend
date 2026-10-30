@@ -2,10 +2,17 @@ package com.tattos.service;
 
 import com.tattos.dto.request.EntradaEstoqueDTO;
 import com.tattos.dto.request.InsumoRequestDTO;
+import com.tattos.dto.request.SaidaEstoqueDTO;
 import com.tattos.dto.response.InsumoResponseDTO;
 import com.tattos.exception.BusinessException;
+import com.tattos.model.Cliente;
+import com.tattos.model.MovimentacaoEstoque;
+import com.tattos.model.Tatuador;
+import com.tattos.model.Usuario;
+import com.tattos.model.enums.TipoMovimentacao;
 import com.tattos.repository.InsumoRepository;
 import com.tattos.repository.MovimentacaoEstoqueRepository;
+import com.tattos.repository.UsuarioRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,7 +39,9 @@ class InsumoServiceTest {
 
     @BeforeEach
     void setUp() {
+        movimentacaoRepository.deleteAll();
         insumoRepository.deleteAll();
+        usuarioRepository.deleteAll();
     }
 
     @Test
@@ -108,6 +117,13 @@ class InsumoServiceTest {
     @Autowired
     private MovimentacaoEstoqueRepository movimentacaoRepository;
 
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+
+    private Long usuarioId(Usuario u) {
+        return usuarioRepository.save(u).getId();
+    }
+
     private Long insumoSemCusto() {
         return insumoService.criar(InsumoRequestDTO.builder()
                 .nome("Bico Descartável").quantidadeAtual(0).nivelCritico(1)
@@ -152,5 +168,51 @@ class InsumoServiceTest {
                 .quantidade(4).custoUnitario(new BigDecimal("7.50")).build());
 
         assertEquals(0, new BigDecimal("7.50").compareTo(insumoService.buscarPorId(id).getValorUnitario()));
+    }
+
+    @Test
+    @DisplayName("Saida registra quem retirou o material")
+    void saidaRegistraQuemRetirou() {
+        Long id = insumoSemCusto();
+        insumoService.registrarEntrada(id, EntradaEstoqueDTO.builder().quantidade(10).build());
+        Long tatuadorId = usuarioId(Tatuador.builder()
+                .nome("Tat Retirada").email("retirada.t@tattos.com").senha("h").ativo(true).build());
+
+        InsumoResponseDTO dto = insumoService.registrarSaida(id, SaidaEstoqueDTO.builder()
+                .quantidade(3).retiradoPorId(tatuadorId).motivo("sessão").build());
+
+        assertEquals(7, dto.getQuantidadeAtual());
+        List<MovimentacaoEstoque> movs = movimentacaoRepository.findByInsumoIdOrderByCreatedAtDesc(id);
+        assertEquals(2, movs.size());
+        MovimentacaoEstoque saida = movs.stream()
+                .filter(m -> m.getTipo() == TipoMovimentacao.SAIDA).findFirst().orElseThrow();
+        assertEquals(tatuadorId, saida.getRetiradoPor().getId());
+    }
+
+    @Test
+    @DisplayName("Saida com retiradoPor cliente retorna erro de negocio")
+    void saidaComRetiradoPorClienteRetornaErro() {
+        Long id = insumoSemCusto();
+        insumoService.registrarEntrada(id, EntradaEstoqueDTO.builder().quantidade(10).build());
+        Long clienteId = usuarioId(Cliente.builder()
+                .nome("Cli").email("retirada.c@tattos.com").senha("h").ativo(true).build());
+
+        Long finalId = id;
+        assertThrows(BusinessException.class, () -> insumoService.registrarSaida(finalId,
+                SaidaEstoqueDTO.builder().quantidade(1).retiradoPorId(clienteId).build()));
+    }
+
+    @Test
+    @DisplayName("Saida com saldo insuficiente nao grava movimentacao")
+    void saidaComSaldoInsuficienteNaoGravaMovimentacao() {
+        Long id = insumoSemCusto();
+        insumoService.registrarEntrada(id, EntradaEstoqueDTO.builder().quantidade(2).build());
+        Long tatuadorId = usuarioId(Tatuador.builder()
+                .nome("Tat Saldo").email("saldo.t@tattos.com").senha("h").ativo(true).build());
+
+        Long finalId = id;
+        assertThrows(BusinessException.class, () -> insumoService.registrarSaida(finalId,
+                SaidaEstoqueDTO.builder().quantidade(5).retiradoPorId(tatuadorId).build()));
+        assertEquals(1, movimentacaoRepository.findByInsumoIdOrderByCreatedAtDesc(id).size());
     }
 }
