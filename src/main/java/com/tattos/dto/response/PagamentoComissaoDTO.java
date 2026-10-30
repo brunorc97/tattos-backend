@@ -29,6 +29,8 @@ public class PagamentoComissaoDTO {
     private List<Item> itens;
     private LocalDateTime createdAt;
     private LocalDateTime pagoEm;
+    private java.time.LocalDate periodoInicio;
+    private java.time.LocalDate periodoFim;
 
     @Data
     @NoArgsConstructor
@@ -61,6 +63,8 @@ public class PagamentoComissaoDTO {
                         .toList())
                 .createdAt(p.getCreatedAt())
                 .pagoEm(p.getPagoEm())
+                .periodoInicio(p.getPeriodoInicio())
+                .periodoFim(p.getPeriodoFim())
                 .build();
     }
 }

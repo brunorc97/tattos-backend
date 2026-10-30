@@ -75,4 +75,10 @@ public class PagamentoComissao {
 
     @Column(name = "pago_em")
     private LocalDateTime pagoEm;
+
+    @Column(name = "periodo_inicio")
+    private java.time.LocalDate periodoInicio;
+
+    @Column(name = "periodo_fim")
+    private java.time.LocalDate periodoFim;
 }
