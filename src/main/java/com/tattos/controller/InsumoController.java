@@ -75,8 +75,11 @@ public class InsumoController {
         return ResponseEntity.ok(insumoService.atualizar(id, dto));
     }
 
-    @Operation(summary = "Registrar entrada de estoque")
+    @Operation(summary = "Registrar entrada de estoque (deprecated)",
+            description = "Use POST /{id}/entrada com custo do material. Este endpoint não grava histórico.",
+            deprecated = true)
     @ApiResponse(responseCode = "200", description = "Estoque atualizado")
+    @Deprecated
     @PatchMapping("/{id}/entrada")
     @PreAuthorize("hasAnyRole('GESTOR','TATUADOR')")
     public ResponseEntity<InsumoResponseDTO> registrarEntrada(
@@ -85,14 +88,49 @@ public class InsumoController {
         return ResponseEntity.ok(insumoService.registrarEntrada(id, dto.getQuantidade()));
     }
 
-    @Operation(summary = "Registrar saída de estoque")
+    @Operation(summary = "Registrar saída de estoque (deprecated)",
+            description = "Use POST /{id}/saida informando quem retirou. Este endpoint não grava histórico.",
+            deprecated = true)
     @ApiResponse(responseCode = "200", description = "Estoque atualizado")
+    @Deprecated
     @PatchMapping("/{id}/saida")
     @PreAuthorize("hasAnyRole('GESTOR','TATUADOR')")
     public ResponseEntity<InsumoResponseDTO> registrarSaida(
             @PathVariable Long id,
             @Valid @RequestBody AjusteEstoqueDTO dto) {
         return ResponseEntity.ok(insumoService.registrarSaida(id, dto.getQuantidade()));
+    }
+
+    @Operation(summary = "Registrar entrada de estoque com custo",
+            description = "Grava movimentação de ENTRADA; quando custoUnitario é informado, recalcula o valor unitário como média simples dos custos de entrada.")
+    @ApiResponse(responseCode = "200", description = "Estoque atualizado")
+    @PostMapping("/{id}/entrada")
+    @PreAuthorize("hasAnyRole('GESTOR','TATUADOR')")
+    public ResponseEntity<InsumoResponseDTO> entrada(
+            @PathVariable Long id,
+            @Valid @RequestBody com.tattos.dto.request.EntradaEstoqueDTO dto) {
+        return ResponseEntity.ok(insumoService.registrarEntrada(id, dto));
+    }
+
+    @Operation(summary = "Registrar saída de estoque com responsável",
+            description = "Grava movimentação de SAIDA com o tatuador/gestor que retirou o material.")
+    @ApiResponse(responseCode = "200", description = "Estoque atualizado")
+    @PostMapping("/{id}/saida")
+    @PreAuthorize("hasAnyRole('GESTOR','TATUADOR')")
+    public ResponseEntity<InsumoResponseDTO> saida(
+            @PathVariable Long id,
+            @Valid @RequestBody com.tattos.dto.request.SaidaEstoqueDTO dto) {
+        return ResponseEntity.ok(insumoService.registrarSaida(id, dto));
+    }
+
+    @Operation(summary = "Histórico de movimentações do insumo",
+            description = "Lista entradas e saídas, mais recentes primeiro.")
+    @ApiResponse(responseCode = "200", description = "Histórico retornado")
+    @GetMapping("/{id}/movimentacoes")
+    @PreAuthorize("hasAnyRole('GESTOR','TATUADOR')")
+    public ResponseEntity<java.util.List<com.tattos.dto.response.MovimentacaoEstoqueResponseDTO>> movimentacoes(
+            @PathVariable Long id) {
+        return ResponseEntity.ok(insumoService.listarMovimentacoes(id));
     }
 
     @Operation(summary = "Deletar insumo")

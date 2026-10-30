@@ -3,6 +3,7 @@ package com.tattos.service;
 import com.tattos.dto.request.EntradaEstoqueDTO;
 import com.tattos.dto.request.InsumoRequestDTO;
 import com.tattos.dto.response.InsumoResponseDTO;
+import com.tattos.dto.response.MovimentacaoEstoqueResponseDTO;
 import com.tattos.exception.BusinessException;
 import com.tattos.exception.ConflictException;
 import com.tattos.exception.ResourceNotFoundException;
@@ -32,6 +33,16 @@ public class InsumoService {
     public List<InsumoResponseDTO> verificarEstoque() {
         return insumoRepository.findInsumosAbaixoNivelCritico().stream()
                 .map(InsumoResponseDTO::fromEntity)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<MovimentacaoEstoqueResponseDTO> listarMovimentacoes(Long insumoId) {
+        if (!insumoRepository.existsById(insumoId)) {
+            throw new ResourceNotFoundException("Insumo não encontrado com ID: " + insumoId);
+        }
+        return movimentacaoRepository.findByInsumoIdOrderByCreatedAtDesc(insumoId).stream()
+                .map(MovimentacaoEstoqueResponseDTO::fromEntity)
                 .toList();
     }
 
