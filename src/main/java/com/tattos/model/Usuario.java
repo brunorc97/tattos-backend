@@ -67,6 +67,9 @@ public class Usuario implements UserDetails {
     @Column(columnDefinition = "TEXT")
     private String bio;
 
+    @Column(name = "foto_url", length = 500)
+    private String fotoUrl;
+
     // Atributos específicos de Gestor
     @Column(length = 100)
     private String cargo;
