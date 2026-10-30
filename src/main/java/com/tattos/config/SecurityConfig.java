@@ -94,6 +94,12 @@ public class SecurityConfig {
                 // Cupons de desconto — gestor e tatuador
                 .requestMatchers("/api/v1/cupons/**").hasAnyRole("GESTOR", "TATUADOR")
 
+                // Vitrine do estúdio — autenticado; regra fina por endpoint via @PreAuthorize
+                .requestMatchers("/api/v1/studio/**").hasAnyRole("GESTOR", "TATUADOR", "CLIENTE")
+
+                // Bancadas — gestor e tatuador
+                .requestMatchers("/api/v1/bancadas/**").hasAnyRole("GESTOR", "TATUADOR")
+
                 // Módulo de Usuários
                 .requestMatchers("/api/usuarios/**", "/api/artists/**", "/api/tatuadores/**",
                         "/api/v1/usuarios/**", "/api/v1/artists/**", "/api/v1/tatuadores/**").authenticated()

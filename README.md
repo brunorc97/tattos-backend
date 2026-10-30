@@ -237,6 +237,7 @@ Cupons	/api/v1/cupons/**	✅	❌	❌
 Bancadas	/api/v1/bancadas/**	✅	✅	❌
 Arquivos	/api/v1/files/**	✅	✅	✅
 Google Calendar	/api/google-calendar/**	✅	✅	❌
+Studio (vitrine)	/api/v1/studio/**	✅	✅	✅
 Usuários	/api/usuarios/**	✅	❌	❌
 
 ⸻
