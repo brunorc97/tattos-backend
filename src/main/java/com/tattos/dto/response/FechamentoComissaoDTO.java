@@ -40,5 +40,6 @@ public class FechamentoComissaoDTO {
         private BigDecimal comissaoPercentual;
         private BigDecimal valorRepasse;
         private String formaPagamento;
+        private com.tattos.model.enums.StatusRepasse statusRepasse;
     }
 }

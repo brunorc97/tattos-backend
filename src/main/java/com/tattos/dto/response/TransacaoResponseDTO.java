@@ -1,6 +1,7 @@
 package com.tattos.dto.response;
 
 import com.tattos.model.TransacaoFinanceira;
+import com.tattos.model.enums.StatusRepasse;
 import com.tattos.model.enums.StatusTransacao;
 import com.tattos.model.enums.TipoTransacao;
 import lombok.AllArgsConstructor;
@@ -35,6 +36,7 @@ public class TransacaoResponseDTO {
     private java.math.BigDecimal valorLiquido;
     private BigDecimal comissaoPercentual;
     private BigDecimal valorRepasse;
+    private StatusRepasse statusRepasse;
     private Long agendamentoId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -58,6 +60,7 @@ public class TransacaoResponseDTO {
                 .valorLiquido(t.getValorLiquido())
                 .comissaoPercentual(t.getComissaoPercentual())
                 .valorRepasse(t.getValorRepasse())
+                .statusRepasse(t.getStatusRepasse())
                 .agendamentoId(t.getAgendamento() != null ? t.getAgendamento().getId() : null)
                 .createdAt(t.getCreatedAt())
                 .updatedAt(t.getUpdatedAt())
