@@ -68,13 +68,17 @@ public class BancadaController {
     }
 
     @Operation(summary = "Disponibilidade da bancada",
-            description = "Grade de horários do dia (09h–19h, slots de 60min) marcando livre/ocupado. Agendamentos cancelados não bloqueiam.")
+            description = "Grade de horários do dia (09h–19h, slots de 60min) marcando livre/ocupado. Preferir bancadaId; cabine (texto) está deprecated.")
     @ApiResponse(responseCode = "200", description = "Grade retornada")
     @GetMapping("/disponibilidade")
     @PreAuthorize("hasAnyRole('GESTOR','TATUADOR')")
     public ResponseEntity<Map<String, Object>> disponibilidade(
-            @RequestParam String cabine,
+            @RequestParam(required = false) Long bancadaId,
+            @RequestParam(required = false) String cabine,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data) {
+        if (bancadaId != null) {
+            return ResponseEntity.ok(bancadaService.disponibilidade(bancadaId, data));
+        }
         return ResponseEntity.ok(bancadaService.disponibilidade(cabine, data));
     }
 }

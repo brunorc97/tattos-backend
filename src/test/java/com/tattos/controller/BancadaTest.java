@@ -38,6 +38,9 @@ class BancadaTest {
     private AgendamentoRepository agendamentoRepository;
 
     @Autowired
+    private com.tattos.repository.BancadaRepository bancadaRepository;
+
+    @Autowired
     private UsuarioRepository usuarioRepository;
 
     private LocalDate dia;
@@ -90,6 +93,34 @@ class BancadaTest {
                         .param("cabine", "Cabine 01")
                         .param("data", dia.toString()))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("Disponibilidade por bancadaId mostra slots so daquela bancada")
+    @WithMockUser(roles = "GESTOR")
+    void disponibilidadePorBancadaId() throws Exception {
+        com.tattos.model.Bancada b1 = bancadaRepository.save(
+                com.tattos.model.Bancada.builder().nome("Cabine 01").build());
+        bancadaRepository.save(com.tattos.model.Bancada.builder().nome("Outra Bancada").build());
+
+        mockMvc.perform(get("/api/v1/bancadas/disponibilidade")
+                        .param("bancadaId", b1.getId().toString())
+                        .param("data", dia.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.bancadaId").value(b1.getId()))
+                .andExpect(jsonPath("$.bancadaNome").value("Cabine 01"))
+                .andExpect(jsonPath("$.horarios[?(@.inicio == '14:00')].livre").value(false))
+                .andExpect(jsonPath("$.horarios[?(@.inicio == '09:00')].livre").value(true));
+    }
+
+    @Test
+    @DisplayName("Disponibilidade por bancadaId inexistente retorna 404")
+    @WithMockUser(roles = "GESTOR")
+    void disponibilidadeBancadaInexistente() throws Exception {
+        mockMvc.perform(get("/api/v1/bancadas/disponibilidade")
+                        .param("bancadaId", "999999")
+                        .param("data", dia.toString()))
+                .andExpect(status().isNotFound());
     }
 
     @Test

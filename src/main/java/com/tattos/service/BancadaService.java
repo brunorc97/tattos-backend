@@ -28,15 +28,34 @@ public class BancadaService {
     private static final int SLOT_MINUTOS = 60;
 
     private final AgendamentoRepository agendamentoRepository;
+    private final com.tattos.repository.BancadaRepository bancadaRepository;
 
     @Transactional(readOnly = true)
     public Map<String, Object> disponibilidade(String cabine, LocalDate data) {
+        return grade(data, a -> cabine.equals(a.getCabine()),
+                Map.of("cabine", cabine));
+    }
+
+    /** Disponibilidade por bancada cadastrada, com fallback para o nome (agendamentos legados). */
+    @Transactional(readOnly = true)
+    public Map<String, Object> disponibilidade(Long bancadaId, LocalDate data) {
+        com.tattos.model.Bancada bancada = bancadaRepository.findById(bancadaId)
+                .orElseThrow(() -> new com.tattos.exception.ResourceNotFoundException(
+                        "Bancada não encontrada com ID: " + bancadaId));
+        return grade(data,
+                a -> (a.getBancada() != null && a.getBancada().getId().equals(bancadaId))
+                        || bancada.getNome().equals(a.getCabine()),
+                Map.of("bancadaId", bancada.getId(), "bancadaNome", bancada.getNome()));
+    }
+
+    private Map<String, Object> grade(LocalDate data, java.util.function.Predicate<Agendamento> daBancada,
+                                      Map<String, Object> identidade) {
         LocalDateTime inicioDia = data.atStartOfDay();
         LocalDateTime fimDia = data.atTime(LocalTime.MAX);
 
         List<Agendamento> doDia = agendamentoRepository
                 .findComFiltros(null, null, null, inicioDia, fimDia).stream()
-                .filter(a -> cabine.equals(a.getCabine()))
+                .filter(daBancada)
                 .filter(a -> a.getStatus() != StatusAgendamento.CANCELADO)
                 .toList();
 
@@ -66,10 +85,9 @@ public class BancadaService {
             horarios.add(slotMap);
         }
 
-        return Map.of(
-                "cabine", cabine,
-                "data", data.toString(),
-                "horarios", horarios
-        );
+        Map<String, Object> resultado = new HashMap<>(identidade);
+        resultado.put("data", data.toString());
+        resultado.put("horarios", horarios);
+        return resultado;
     }
 }
