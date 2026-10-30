@@ -25,6 +25,16 @@ import org.springframework.web.bind.annotation.RestController;
 public class StudioController {
 
     private final StudioService studioService;
+    private final com.tattos.service.TatuadorVitrineService tatuadorVitrineService;
+
+    @Operation(summary = "Tatuadores do estúdio para a vitrine",
+            description = "Perfil público com média de avaliações (media de (notaTatuagem+notaTatuador)/2, 1 casa decimal; null sem avaliações). Somente tatuadores ativos.")
+    @ApiResponse(responseCode = "200", description = "Lista retornada")
+    @GetMapping("/tatuadores")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<java.util.List<com.tattos.dto.response.TatuadorVitrineResponseDTO>> tatuadores() {
+        return ResponseEntity.ok(tatuadorVitrineService.listar());
+    }
 
     @Operation(summary = "Informações do estúdio")
     @ApiResponse(responseCode = "200", description = "Informações retornadas")
