@@ -26,6 +26,17 @@ public class OrcamentoRequestDTO {
     @DecimalMin(value = "0.01", message = "{validation.positive}")
         @Schema(example = "3500.00")private BigDecimal valor;
 
-    
     @Schema(example = "3")private Long projetoId;
+
+    @Schema(example = "FECHADO")private com.tattos.model.enums.TipoCobranca tipoCobranca;
+
+    @Schema(example = "1300.00")private BigDecimal valorTotal;
+
+    @Schema(example = "500.00")private BigDecimal valorSessao;
+
+    @Schema(example = "2")private Integer sessoesMin;
+
+    @Schema(example = "3")private Integer sessoesMax;
+
+    @Schema(example = "preto e cinza, costas")private String observacoes;
 }

@@ -12,4 +12,11 @@ public class OrcamentoResponseDTO {
     private BigDecimal valor;
     private LocalDateTime dataCriacao;
     private Long projetoId;
+    private com.tattos.model.enums.TipoCobranca tipoCobranca;
+    private BigDecimal valorTotal;
+    private BigDecimal valorSessao;
+    private Integer sessoesMin;
+    private Integer sessoesMax;
+    private String observacoes;
+    private com.tattos.model.enums.StatusOrcamento status;
 }

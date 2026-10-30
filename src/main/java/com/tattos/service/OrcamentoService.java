@@ -22,6 +22,7 @@ public class OrcamentoService {
 
     @Transactional
     public OrcamentoResponseDTO criarOrcamento(OrcamentoRequestDTO dto) {
+        validarRegrasComerciais(dto);
         Projeto projeto = null;
         if (dto.getProjetoId() != null) {
             projeto = projetoRepository.findById(dto.getProjetoId())
@@ -31,9 +32,36 @@ public class OrcamentoService {
                 .nome(dto.getNome())
                 .valor(dto.getValor())
                 .projeto(projeto)
+                .tipoCobranca(dto.getTipoCobranca())
+                .valorTotal(dto.getValorTotal())
+                .valorSessao(dto.getValorSessao())
+                .sessoesMin(dto.getSessoesMin())
+                .sessoesMax(dto.getSessoesMax())
+                .observacoes(dto.getObservacoes())
                 .build();
         Orcamento saved = orcamentoRepository.save(orcamento);
         return mapToResponse(saved);
+    }
+
+    private void validarRegrasComerciais(OrcamentoRequestDTO dto) {
+        if (dto.getTipoCobranca() == null) {
+            return;
+        }
+        switch (dto.getTipoCobranca()) {
+            case FECHADO -> {
+                if (dto.getValorTotal() == null) {
+                    throw new com.tattos.exception.BusinessException("valorTotal é obrigatório quando o tipo de cobrança é FECHADO.");
+                }
+            }
+            case POR_SESSAO -> {
+                if (dto.getValorSessao() == null || dto.getSessoesMin() == null) {
+                    throw new com.tattos.exception.BusinessException("valorSessao e sessoesMin são obrigatórios quando o tipo de cobrança é POR_SESSAO.");
+                }
+                if (dto.getSessoesMax() != null && dto.getSessoesMax() < dto.getSessoesMin()) {
+                    throw new com.tattos.exception.BusinessException("sessoesMax não pode ser menor que sessoesMin.");
+                }
+            }
+        }
     }
 
     @Transactional(readOnly = true)
@@ -53,6 +81,13 @@ public class OrcamentoService {
         if (orcamento.getProjeto() != null) {
             dto.setProjetoId(orcamento.getProjeto().getId());
         }
+        dto.setTipoCobranca(orcamento.getTipoCobranca());
+        dto.setValorTotal(orcamento.getValorTotal());
+        dto.setValorSessao(orcamento.getValorSessao());
+        dto.setSessoesMin(orcamento.getSessoesMin());
+        dto.setSessoesMax(orcamento.getSessoesMax());
+        dto.setObservacoes(orcamento.getObservacoes());
+        dto.setStatus(orcamento.getStatus());
         return dto;
     }
 }
