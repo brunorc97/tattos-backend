@@ -32,6 +32,20 @@ import java.time.LocalDate;
 public class ComissaoController {
 
     private final ComissaoExportService comissaoExportService;
+    private final com.tattos.service.ComissaoService comissaoService;
+
+    @Operation(summary = "Fechamento de comissões em JSON",
+            description = "Retorna o fechamento do tatuador no período com o status de repasse por item (PENDENTE/AGENDADO/PAGO). Tatuador só acessa o próprio fechamento.")
+    @ApiResponse(responseCode = "200", description = "Fechamento com itens e totais")
+    @GetMapping("/tatuador/{tatuadorId}/fechamento")
+    @PreAuthorize("hasAnyRole('GESTOR','TATUADOR')")
+    public ResponseEntity<com.tattos.dto.response.FechamentoComissaoDTO> fechamento(
+            @PathVariable @NotNull Long tatuadorId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fim,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.tattos.model.Usuario logado) {
+        return ResponseEntity.ok(comissaoService.fechamento(tatuadorId, inicio, fim, logado));
+    }
 
     @Operation(summary = "Exportar comissões em CSV",
             description = "Retorna um arquivo CSV contendo todas as transações financeiras de um tatuador entre as datas informadas.")
