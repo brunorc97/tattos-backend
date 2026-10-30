@@ -375,8 +375,7 @@ class AgendamentoServiceTest {
     @Test
     @DisplayName("Deve criar agendamento com desconto zero quando nenhum código for informado")
     void deveCriarAgendamentoSemDescontoQuandoNenhumCodigoInformado() {
-        LocalDateTime dataHora = LocalDateTime.now().plusDays(2).withHour(19).withMinute(0);
-
+        LocalDateTime dataHora = LocalDateTime.now().plusDays(2).withHour(17).withMinute(0);
         AgendamentoRequestDTO dto = AgendamentoRequestDTO.builder()
                 .clienteId(cliente.getId())
                 .tatuadorId(tatuador.getId())
@@ -460,5 +459,53 @@ class AgendamentoServiceTest {
 
         // Conciliação perfeita: R$ 200 (sinal) + R$ 800 (saldo restante) = R$ 1000 (total)
         assertEquals(new BigDecimal("1000.00"), totalRecebido);
+    }
+
+    @Test
+    @DisplayName("Criar agendamento no passado retorna erro de negocio")
+    void criarNoPassadoRetornaErro() {
+        AgendamentoRequestDTO dto = agendamentoBase(new BigDecimal("500.00"));
+        dto.setDataHora(LocalDateTime.now().minusDays(1));
+        assertThrows(BusinessException.class, () -> agendamentoService.criar(dto));
+    }
+
+    @Test
+    @DisplayName("Criar agendamento antes da abertura (09h) retorna erro")
+    void criarForaDaGradeRetornaErro() {
+        AgendamentoRequestDTO dto = agendamentoBase(new BigDecimal("500.00"));
+        dto.setDataHora(LocalDateTime.now().plusDays(2).withHour(8).withMinute(0));
+        assertThrows(BusinessException.class, () -> agendamentoService.criar(dto));
+    }
+
+    @Test
+    @DisplayName("Criar agendamento terminando apos 19h retorna erro")
+    void criarTerminandoApos19hRetornaErro() {
+        AgendamentoRequestDTO dto = agendamentoBase(new BigDecimal("500.00"));
+        dto.setDataHora(LocalDateTime.now().plusDays(2).withHour(18).withMinute(0));
+        dto.setDuracaoMinutos(120); // termina 20:00
+        assertThrows(BusinessException.class, () -> agendamentoService.criar(dto));
+    }
+
+    @Test
+    @DisplayName("Criar nas bordas da grade (09h e fim 19h) e aceito")
+    void criarNaBordaDaGradeEhAceito() {
+        AgendamentoRequestDTO manha = agendamentoBase(new BigDecimal("500.00"));
+        manha.setDataHora(LocalDateTime.now().plusDays(2).withHour(9).withMinute(0).withSecond(0).withNano(0));
+        manha.setDuracaoMinutos(60);
+        assertDoesNotThrow(() -> agendamentoService.criar(manha));
+
+        AgendamentoRequestDTO tarde = agendamentoBase(new BigDecimal("500.00"));
+        tarde.setDataHora(LocalDateTime.now().plusDays(3).withHour(18).withMinute(0).withSecond(0).withNano(0));
+        tarde.setDuracaoMinutos(60); // termina 19:00
+        assertDoesNotThrow(() -> agendamentoService.criar(tarde));
+    }
+
+    @Test
+    @DisplayName("Atualizar para horario invalido retorna erro")
+    void atualizarParaHorarioInvalidoRetornaErro() {
+        AgendamentoResponseDTO criado = agendamentoService.criar(agendamentoBase(new BigDecimal("500.00")));
+        AgendamentoRequestDTO dto = agendamentoBase(new BigDecimal("500.00"));
+        dto.setDataHora(LocalDateTime.now().plusDays(2).withHour(20).withMinute(0));
+        assertThrows(BusinessException.class, () -> agendamentoService.atualizar(criado.getId(), dto));
     }
 }

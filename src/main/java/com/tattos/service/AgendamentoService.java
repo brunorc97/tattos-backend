@@ -48,6 +48,7 @@ public class AgendamentoService {
         LocalDateTime inicio = dto.getDataHora();
         int duracao = (dto.getDuracaoMinutos() != null && dto.getDuracaoMinutos() > 0) ? dto.getDuracaoMinutos() : 60;
         LocalDateTime fim = inicio.plusMinutes(duracao);
+        validarJanelaHorario(inicio, fim);
         validarConflitos(tatuador.getId(), dto.getCabine(), inicio, fim, null);
         BigDecimal desconto = calcularDescontoIndicacao(dto.getCodigoIndicacao(), cliente.getId(), dto.getValor());
         // cupom de desconto (promoção): soma ao da indicação, nunca além do valor do procedimento
@@ -171,6 +172,7 @@ public class AgendamentoService {
         LocalDateTime inicio = dto.getDataHora();
         int duracao = (dto.getDuracaoMinutos() != null && dto.getDuracaoMinutos() > 0) ? dto.getDuracaoMinutos() : 60;
         LocalDateTime fim = inicio.plusMinutes(duracao);
+        validarJanelaHorario(inicio, fim);
         validarConflitos(tatuador.getId(), dto.getCabine(), inicio, fim, id);
         agendamento.setCliente(cliente);
         agendamento.setTatuador(tatuador);
@@ -254,8 +256,25 @@ public class AgendamentoService {
         agendamentoRepository.deleteById(id);
     }
 
-    private void validarConflitos(Long tatuadorId, String cabine, LocalDateTime inicio, LocalDateTime fim, Long id) {
-        if (agendamentoRepository.existeConflitoTatuador(tatuadorId, inicio, fim, id)) {
+    /**
+     * Janela de funcionamento: não aceita horário no passado e respeita a
+     * grade comercial 09:00–19:00 (bordas inclusivas), alinhada à bancada.
+     */
+    private void validarJanelaHorario(LocalDateTime inicio, LocalDateTime fim) {
+        LocalDateTime ini = inicio.truncatedTo(java.time.temporal.ChronoUnit.MINUTES);
+        LocalDateTime f = fim.truncatedTo(java.time.temporal.ChronoUnit.MINUTES);
+        if (ini.isBefore(LocalDateTime.now())) {
+            throw new BusinessException("Não é possível agendar em data/hora no passado.");
+        }
+        if (ini.getHour() < 9) {
+            throw new BusinessException("O horário de início deve ser a partir das 09:00.");
+        }
+        if (f.isAfter(ini.toLocalDate().atTime(19, 0))) {
+            throw new BusinessException("O atendimento deve terminar até as 19:00.");
+        }
+    }
+
+    private void validarConflitos(Long tatuadorId, String cabine, LocalDateTime inicio, LocalDateTime fim, Long id) {        if (agendamentoRepository.existeConflitoTatuador(tatuadorId, inicio, fim, id)) {
             throw new ConflictException("Conflito de agenda: o tatuador já possui agendamento confirmado neste intervalo.");
         }
         if (agendamentoRepository.existeConflitoCabine(cabine.trim(), inicio, fim, id)) {
