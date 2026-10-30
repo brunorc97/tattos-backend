@@ -91,7 +91,9 @@ class PagamentoComissaoControllerTest {
                 .andExpect(jsonPath("$.status").value("AGENDADO"))
                 .andExpect(jsonPath("$.totalBruto").value(900.00))
                 .andExpect(jsonPath("$.totalLiquido").value(900.00))
-                .andExpect(jsonPath("$.totalAdiantamentosAbatidos").value(0.00));
+                .andExpect(jsonPath("$.totalAdiantamentosAbatidos").value(0.00))
+                .andExpect(jsonPath("$.periodoInicio").value(LocalDate.now().toString()))
+                .andExpect(jsonPath("$.periodoFim").value(LocalDate.now().toString()));
 
         Long pagamentoId = pagamentoRepository.findAll().get(0).getId();
 

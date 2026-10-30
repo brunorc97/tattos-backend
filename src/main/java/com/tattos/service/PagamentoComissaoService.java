@@ -77,6 +77,11 @@ public class PagamentoComissaoService {
                     .orElseThrow(() -> new ResourceNotFoundException("Comprovante não encontrado com ID: " + comprovanteId));
         }
 
+        java.time.LocalDate periodoInicio = transacoes.stream().map(TransacaoFinanceira::getData)
+                .filter(java.util.Objects::nonNull).min(java.time.LocalDate::compareTo).orElse(null);
+        java.time.LocalDate periodoFim = transacoes.stream().map(TransacaoFinanceira::getData)
+                .filter(java.util.Objects::nonNull).max(java.time.LocalDate::compareTo).orElse(null);
+
         PagamentoComissao pagamento = PagamentoComissao.builder()
                 .tatuador(tatuador)
                 .totalBruto(totalBruto)
@@ -85,6 +90,8 @@ public class PagamentoComissaoService {
                 .formaPagamento(formaPagamento)
                 .comprovante(comprovante)
                 .status(PagamentoComissao.Status.AGENDADO)
+                .periodoInicio(periodoInicio)
+                .periodoFim(periodoFim)
                 .build();
 
         for (TransacaoFinanceira t : transacoes) {

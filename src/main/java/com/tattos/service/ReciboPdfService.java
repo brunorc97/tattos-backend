@@ -48,6 +48,12 @@ public class ReciboPdfService {
                 ? p.getPagoEm().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
                 : "—";
 
+        DateTimeFormatter dia = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        String linhaPeriodo = p.getPeriodoInicio() != null && p.getPeriodoFim() != null
+                ? "<br/><strong>Período:</strong> " + p.getPeriodoInicio().format(dia)
+                        + " – " + p.getPeriodoFim().format(dia)
+                : "";
+
         return """
             <html><head><style>
               body { font-family: sans-serif; color: #222; margin: 32px; }
@@ -62,7 +68,7 @@ public class ReciboPdfService {
               <div class="box">
                 <strong>Tatuador:</strong> %s<br/>
                 <strong>Forma de pagamento:</strong> %s<br/>
-                <strong>Data:</strong> %s
+                <strong>Data:</strong> %s%s
               </div>
               <table>
                 <tr><th>Transação</th><th>Descrição</th><th style='text-align:right'>Repasse</th></tr>
@@ -75,7 +81,7 @@ public class ReciboPdfService {
               </table>
             </body></html>
             """.formatted(p.getId(), dataPagamento,
-                escape(p.getTatuador().getNome()), escape(p.getFormaPagamento()), dataPagamento,
+                escape(p.getTatuador().getNome()), escape(p.getFormaPagamento()), dataPagamento, linhaPeriodo,
                 itens,
                 BRL.format(p.getTotalBruto()),
                 BRL.format(p.getTotalAdiantamentosAbatidos()),
