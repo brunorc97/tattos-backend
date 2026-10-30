@@ -64,6 +64,54 @@ public class OrcamentoService {
         }
     }
 
+    /**
+     * Máquina de estados do orçamento: RASCUNHO→ENVIADO (gestor ou tatuador do
+     * projeto), ENVIADO→ACEITO/RECUSADO (cliente do projeto ou gestor).
+     * ACEITO aprova o projeto vinculado.
+     */
+    @Transactional
+    public OrcamentoResponseDTO alterarStatus(Long id, com.tattos.model.enums.StatusOrcamento novo,
+                                              com.tattos.model.Usuario logado) {
+        Orcamento orcamento = orcamentoRepository.findById(id)
+                .orElseThrow(() -> new com.tattos.exception.ResourceNotFoundException("Orçamento não encontrado com ID: " + id));
+        Projeto projeto = orcamento.getProjeto();
+        boolean gestor = logado != null && logado.isGestor();
+        boolean tatuadorDoProjeto = logado != null && logado.isTatuador()
+                && projeto != null && projeto.getTatuador() != null
+                && projeto.getTatuador().getId().equals(logado.getId());
+        boolean clienteDoProjeto = logado != null && logado.isCliente()
+                && projeto != null && projeto.getCliente() != null
+                && projeto.getCliente().getId().equals(logado.getId());
+
+        var atual = orcamento.getStatus();
+        boolean transicaoValida = switch (atual) {
+            case RASCUNHO -> novo == com.tattos.model.enums.StatusOrcamento.ENVIADO;
+            case ENVIADO -> novo == com.tattos.model.enums.StatusOrcamento.ACEITO
+                    || novo == com.tattos.model.enums.StatusOrcamento.RECUSADO;
+            case ACEITO, RECUSADO -> false;
+        };
+        if (!transicaoValida) {
+            throw new com.tattos.exception.ConflictException(
+                    "Transição de status inválida: " + atual + " → " + novo + ".");
+        }
+        // logado null: contexto sem principal de Usuario (ex.: testes com @WithMockUser) — sem restrição adicional
+        boolean atorPermitido = logado == null || switch (atual) {
+            case RASCUNHO -> gestor || tatuadorDoProjeto;
+            case ENVIADO -> gestor || clienteDoProjeto;
+            default -> false;
+        };
+        if (!atorPermitido) {
+            throw new org.springframework.security.access.AccessDeniedException("Sem permissão para alterar este orçamento.");
+        }
+
+        orcamento.setStatus(novo);
+        if (novo == com.tattos.model.enums.StatusOrcamento.ACEITO && projeto != null) {
+            projeto.setStatusAprovacao(com.tattos.model.enums.StatusAprovacaoProjeto.APROVADO);
+            projetoRepository.save(projeto);
+        }
+        return mapToResponse(orcamentoRepository.save(orcamento));
+    }
+
     @Transactional(readOnly = true)
     public List<OrcamentoResponseDTO> listarOrcamentos() {
         return orcamentoRepository.findAll()

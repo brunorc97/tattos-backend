@@ -38,4 +38,18 @@ public class OrcamentoController {
         OrcamentoResponseDTO created = orcamentoService.criarOrcamento(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
+
+    public record StatusRequest(@jakarta.validation.constraints.NotNull com.tattos.model.enums.StatusOrcamento status) {}
+
+    @Operation(summary = "Alterar status do orçamento",
+            description = "RASCUNHO→ENVIADO (gestor/tatuador do projeto); ENVIADO→ACEITO/RECUSADO (cliente do projeto/gestor). ACEITO aprova o projeto.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Status atualizado")
+    @org.springframework.web.bind.annotation.PatchMapping("/{id}/status")
+    @PreAuthorize("hasAnyRole('GESTOR','TATUADOR','CLIENTE')")
+    public ResponseEntity<OrcamentoResponseDTO> alterarStatus(
+            @org.springframework.web.bind.annotation.PathVariable Long id,
+            @Valid @RequestBody StatusRequest body,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.tattos.model.Usuario logado) {
+        return ResponseEntity.ok(orcamentoService.alterarStatus(id, body.status(), logado));
+    }
 }
